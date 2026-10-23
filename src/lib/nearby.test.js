@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import sample from './__fixtures__/overpass-nashville.json';
+import handler, { ENDPOINTS } from '../../api/nearby.js';
 import {
   deliveryExtras,
   deliveryItems,
@@ -42,7 +43,7 @@ describe('OpenStreetMap results', () => {
   it('builds a query around the user for every chain', () => {
     const q = overpassQuery(here, 1);
     expect(q).toContain('around:1609,36.1627,-86.7816');
-    for (const id of ['Q38076', 'Q752941', 'Q465751', 'Q7130852']) expect(q).toContain(id);
+    for (const id of ['Q38076', 'Q752941', 'Q465751', 'Q7130852']) expect(q).toContain(`["brand:wikidata"="${id}"]`);
   });
 
   it('keeps known chains, skips closed and duplicate places, nearest first', () => {
@@ -61,19 +62,61 @@ describe('OpenStreetMap results', () => {
     expect(nearest.mcdonalds.lat).toBe(36.17); // the closer of the two McDonald's
   });
 
-  it('falls back to the second server when the first fails', async () => {
-    const fetchImpl = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('down'))
-      .mockResolvedValueOnce({ ok: true, json: async () => sample });
+  it('asks this app\'s /api/nearby with a rounded location', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => sample });
     const places = await fetchPlaces(here, { fetchImpl });
-    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls[0][0]).toBe('/api/nearby?lat=36.16&lon=-86.78');
     expect(places.length).toBe(5);
+    // Distances still use the precise location, which never leaves the phone.
+    expect(places[0].miles).toBeCloseTo(milesBetween(here, places[0]), 6);
   });
 
-  it('throws when every server fails', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 504 });
-    await expect(fetchPlaces(here, { fetchImpl })).rejects.toThrow('HTTP 504');
+  it('throws when the search fails', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 502 });
+    await expect(fetchPlaces(here, { fetchImpl })).rejects.toThrow('HTTP 502');
+  });
+});
+
+describe('/api/nearby', () => {
+  const ok = { ok: true, json: async () => sample };
+  const call = async (query, fetchImpl) => {
+    vi.stubGlobal('fetch', fetchImpl);
+    const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json(b) { this.body = b; } };
+    await handler({ query }, res);
+    vi.unstubAllGlobals();
+    return res;
+  };
+
+  it('identifies the app to Overpass and caches the answer', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(ok);
+    const res = await call({ lat: '36.16', lon: '-86.78' }, fetchImpl);
+    expect(res.code).toBe(200);
+    expect(res.body.elements).toHaveLength(sample.elements.length);
+    expect(res.headers['Cache-Control']).toMatch(/s-maxage=86400/);
+    const [url, init] = fetchImpl.mock.calls[0];
+    expect(url).toBe(ENDPOINTS[0]);
+    expect(init.method).toBe('POST');
+    expect(init.headers['User-Agent']).toMatch(/^FoodForBudget\//);
+    expect(init.body.get('data')).toContain('around:12875,36.16,-86.78');
+  });
+
+  it('falls back to the next server, and reports every failure', async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce({ ok: false, status: 406 }).mockRejectedValueOnce(new Error('down')).mockResolvedValueOnce(ok);
+    expect((await call({ lat: '36.16', lon: '-86.78' }, fetchImpl)).code).toBe(200);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+
+    const failing = vi.fn().mockResolvedValue({ ok: false, status: 429 });
+    const res = await call({ lat: '36.16', lon: '-86.78' }, failing);
+    expect(res.code).toBe(502);
+    expect(res.body.error).toBe(ENDPOINTS.map((u) => `${new URL(u).host}: HTTP 429`).join('; '));
+    expect(res.headers['Cache-Control']).toBe('no-store');
+  });
+
+  it('rejects a missing or bad location', async () => {
+    const fetchImpl = vi.fn();
+    expect((await call({}, fetchImpl)).code).toBe(400);
+    expect((await call({ lat: '200', lon: '0' }, fetchImpl)).code).toBe(400);
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
 
