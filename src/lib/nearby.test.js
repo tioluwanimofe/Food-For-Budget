@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import sample from './__fixtures__/overpass-nashville.json';
-import handler, { ENDPOINTS } from '../../api/nearby.js';
+import sample from './__fixtures__/photon-nashville.json';
 import {
   deliveryExtras,
   deliveryItems,
@@ -8,8 +7,11 @@ import {
   inReach,
   milesBetween,
   nearestByChain,
-  overpassQuery,
-  parsePlaces,
+  BRANDS,
+  nominatimUrl,
+  parseNominatim,
+  parsePhoton,
+  photonUrl,
   travelMinutes,
 } from './nearby.js';
 
@@ -39,84 +41,74 @@ describe('distance and time', () => {
   });
 });
 
-describe('OpenStreetMap results', () => {
-  it('builds a query around the user for every chain', () => {
-    const q = overpassQuery(here, 1);
-    expect(q).toContain('around:1609,36.1627,-86.7816');
-    for (const id of ['Q38076', 'Q752941', 'Q465751', 'Q7130852']) expect(q).toContain(`["brand:wikidata"="${id}"]`);
+describe('OpenStreetMap search', () => {
+  const photonFetch = () =>
+    vi.fn(async (url) => {
+      const q = new URL(url).searchParams.get('q');
+      const chain = Object.keys(BRANDS).find((c) => BRANDS[c].query === q);
+      return { ok: true, json: async () => sample[chain] };
+    });
+
+  it('asks Photon for each chain around a rounded location', () => {
+    const url = new URL(photonUrl('chipotle', here));
+    expect(url.origin).toBe('https://photon.komoot.io');
+    expect(url.searchParams.get('q')).toBe('Chipotle');
+    expect(url.searchParams.get('lat')).toBe('36.16');
+    expect(url.searchParams.get('lon')).toBe('-86.78');
+    expect(url.searchParams.get('osm_tag')).toBe('amenity');
+    const [w, s, e, n] = url.searchParams.get('bbox').split(',').map(Number);
+    expect(n - s).toBeCloseTo(16 / 69, 2); // 8 miles each way
+    expect(w).toBeLessThan(-86.78);
+    expect(e).toBeGreaterThan(-86.78);
   });
 
-  it('keeps known chains, skips closed and duplicate places, nearest first', () => {
-    const places = parsePlaces(sample, here);
-    expect(places.map((p) => p.chain)).toEqual(['mcdonalds', 'mcdonalds', 'chipotle', 'tacobell', 'panera']);
-    expect(places.every((p, i) => i === 0 || p.miles >= places[i - 1].miles)).toBe(true);
-    const chipotle = places.find((p) => p.chain === 'chipotle');
-    expect(chipotle.lat).toBe(36.1478); // a way uses its center
-    expect(chipotle.zip).toBe('37203');
-    expect(places.find((p) => p.address)?.address).toBe('1601 Broadway, Nashville');
+  it('keeps restaurants whose name matches the chain', () => {
+    const mc = parsePhoton('mcdonalds', sample.mcdonalds, here);
+    expect(mc).toHaveLength(2); // not the bus stop
+    expect(mc[0]).toMatchObject({ chain: 'mcdonalds', lat: 36.1561382, lon: -86.7875493, address: '1601 Broadway, Nashville', zip: '37203' });
+    const cp = parsePhoton('chipotle', sample.chipotle, here);
+    expect(cp).toHaveLength(1); // not Taqueria Chipotle Express
   });
 
-  it('picks the nearest location of each chain', () => {
-    const nearest = nearestByChain(parsePlaces(sample, here));
-    expect(Object.keys(nearest).sort()).toEqual(['chipotle', 'mcdonalds', 'panera', 'tacobell']);
-    expect(nearest.mcdonalds.lat).toBe(36.17); // the closer of the two McDonald's
-  });
-
-  it('asks this app\'s /api/nearby with a rounded location', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => sample });
+  it('finds every chain, nearest first, and the nearest of each', async () => {
+    const fetchImpl = photonFetch();
     const places = await fetchPlaces(here, { fetchImpl });
-    expect(fetchImpl.mock.calls[0][0]).toBe('/api/nearby?lat=36.16&lon=-86.78');
-    expect(places.length).toBe(5);
-    // Distances still use the precise location, which never leaves the phone.
-    expect(places[0].miles).toBeCloseTo(milesBetween(here, places[0]), 6);
+    expect(fetchImpl).toHaveBeenCalledTimes(4);
+    expect(places.every((p, i) => i === 0 || p.miles >= places[i - 1].miles)).toBe(true);
+    const nearest = nearestByChain(places);
+    expect(Object.keys(nearest).sort()).toEqual(['chipotle', 'mcdonalds', 'panera', 'tacobell']);
+    expect(nearest.mcdonalds.address).toBe('1601 Broadway, Nashville');
+    expect(nearest.chipotle.zip).toBe('37212');
   });
 
-  it('throws when the search fails', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 502 });
-    await expect(fetchPlaces(here, { fetchImpl })).rejects.toThrow('HTTP 502');
-  });
-});
-
-describe('/api/nearby', () => {
-  const ok = { ok: true, json: async () => sample };
-  const call = async (query, fetchImpl) => {
-    vi.stubGlobal('fetch', fetchImpl);
-    const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json(b) { this.body = b; } };
-    await handler({ query }, res);
-    vi.unstubAllGlobals();
-    return res;
-  };
-
-  it('identifies the app to Overpass and caches the answer', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(ok);
-    const res = await call({ lat: '36.16', lon: '-86.78' }, fetchImpl);
-    expect(res.code).toBe(200);
-    expect(res.body.elements).toHaveLength(sample.elements.length);
-    expect(res.headers['Cache-Control']).toMatch(/s-maxage=86400/);
-    const [url, init] = fetchImpl.mock.calls[0];
-    expect(url).toBe(ENDPOINTS[0]);
-    expect(init.method).toBe('POST');
-    expect(init.headers['User-Agent']).toMatch(/^FoodForBudget\//);
-    expect(init.body.get('data')).toContain('around:12875,36.16,-86.78');
+  it('falls back to Nominatim, one chain a second, when Photon fails', async () => {
+    const result = [{ category: 'amenity', type: 'fast_food', name: 'Chipotle', lat: '36.1442350', lon: '-86.8130984', address: { house_number: '2809', road: 'West End Avenue', city: 'Nashville', postcode: '37203' } }];
+    const fetchImpl = vi.fn(async (url) => {
+      if (url.startsWith('https://photon')) return { ok: false, status: 503 };
+      const q = new URL(url).searchParams.get('q');
+      return { ok: true, json: async () => (q === 'Chipotle' ? result : []) };
+    });
+    const places = await fetchPlaces(here, { fetchImpl, gapMs: 0 });
+    const nominatimCalls = fetchImpl.mock.calls.map(([u]) => u).filter((u) => u.startsWith('https://nominatim.openstreetmap.org/search?'));
+    expect(nominatimCalls).toHaveLength(4);
+    expect(new URL(nominatimCalls[0]).searchParams.get('bounded')).toBe('1');
+    expect(places).toHaveLength(1);
+    expect(places[0]).toMatchObject({ chain: 'chipotle', lat: 36.144235, zip: '37203' });
   });
 
-  it('falls back to the next server, and reports every failure', async () => {
-    const fetchImpl = vi.fn().mockResolvedValueOnce({ ok: false, status: 406 }).mockRejectedValueOnce(new Error('down')).mockResolvedValueOnce(ok);
-    expect((await call({ lat: '36.16', lon: '-86.78' }, fetchImpl)).code).toBe(200);
-    expect(fetchImpl).toHaveBeenCalledTimes(3);
-
-    const failing = vi.fn().mockResolvedValue({ ok: false, status: 429 });
-    const res = await call({ lat: '36.16', lon: '-86.78' }, failing);
-    expect(res.code).toBe(502);
-    expect(res.body.error).toBe(ENDPOINTS.map((u) => `${new URL(u).host}: HTTP 429`).join('; '));
-    expect(res.headers['Cache-Control']).toBe('no-store');
+  it('throws when both searches fail', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 429 });
+    await expect(fetchPlaces(here, { fetchImpl, gapMs: 0 })).rejects.toThrow('HTTP 429');
   });
 
-  it('rejects a missing or bad location', async () => {
-    const fetchImpl = vi.fn();
-    expect((await call({}, fetchImpl)).code).toBe(400);
-    expect((await call({ lat: '200', lon: '0' }, fetchImpl)).code).toBe(400);
-    expect(fetchImpl).not.toHaveBeenCalled();
+  it('parses Nominatim results the same way', () => {
+    const rows = [
+      { category: 'amenity', name: 'Taco Bell', lat: '36.1', lon: '-86.8', address: { road: 'Main St', town: 'Smyrna' } },
+      { category: 'shop', name: 'Taco Bell Outlet', lat: '36.1', lon: '-86.8' },
+    ];
+    expect(parseNominatim('tacobell', rows, here)).toEqual([
+      expect.objectContaining({ chain: 'tacobell', lat: 36.1, lon: -86.8, address: 'Main St, Smyrna', zip: null }),
+    ]);
   });
 });
 

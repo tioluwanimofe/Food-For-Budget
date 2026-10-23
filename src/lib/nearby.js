@@ -1,16 +1,15 @@
 // Which chains are within reach of the user: their location, nearby
-// restaurants from OpenStreetMap (Overpass API, free, no key), and a travel
-// time estimated from distance. Overpass blocks requests straight from a
-// browser, so the search goes through this app's own /api/nearby function
-// (api/nearby.js), which sends a rounded location (about 1 km) only.
+// restaurants from OpenStreetMap, and a travel time estimated from distance.
+// The search uses Photon (photon.komoot.io), a free OpenStreetMap search that
+// allows calls straight from the browser, with OpenStreetMap's Nominatim as
+// the backup. Only a rounded location (about 1 km) leaves the phone.
 
-// OpenStreetMap tags chain locations with the brand's Wikidata id; the name
-// pattern catches locations that only have a name.
+// What to search for, and how a result's name must start.
 export const BRANDS = {
-  mcdonalds: { wikidata: 'Q38076', name: /mcdonald/i },
-  tacobell: { wikidata: 'Q752941', name: /taco bell/i },
-  chipotle: { wikidata: 'Q465751', name: /chipotle/i },
-  panera: { wikidata: 'Q7130852', name: /panera/i },
+  mcdonalds: { query: "McDonald's", name: /^mcdonald/i },
+  tacobell: { query: 'Taco Bell', name: /^taco bell/i },
+  chipotle: { query: 'Chipotle', name: /^chipotle/i },
+  panera: { query: 'Panera Bread', name: /^panera/i },
 };
 
 // Travel modes. Time is estimated from straight-line distance: roads add
@@ -53,53 +52,77 @@ export function inReach(place, mode, minutes) {
   return travelMinutes(place.miles, mode) <= minutes;
 }
 
-export function overpassQuery({ lat, lon }, miles = SEARCH_MILES) {
-  const r = Math.round(miles * METERS_PER_MILE);
-  const names = 'McDonald|Taco Bell|Chipotle|Panera';
-  const area = `(around:${r},${lat},${lon})`;
-  // Exact brand matches use the server's index; the name match is only for
-  // fast food places that lack a brand tag.
-  const brands = Object.values(BRANDS).map((b) => `nwr["brand:wikidata"="${b.wikidata}"]${area};`).join('');
-  return `[out:json][timeout:20];(${brands}nwr["amenity"="fast_food"]["name"~"${names}",i]${area};);out center tags;`;
+// Rounded to 2 decimals (about 1 km) so the location sent is coarse.
+export const roundCoord = (n) => Math.round(n * 100) / 100;
+
+// [west, south, east, north] around a point, `miles` in each direction.
+export function bboxAround({ lat, lon }, miles = SEARCH_MILES) {
+  const dLat = miles / 69;
+  const dLon = miles / (69 * Math.cos((lat * Math.PI) / 180));
+  return [lon - dLon, lat - dLat, lon + dLon, lat + dLat].map((n) => Math.round(n * 1000) / 1000);
 }
 
-function chainOf(tags) {
-  for (const [id, b] of Object.entries(BRANDS)) if (tags['brand:wikidata'] === b.wikidata) return id;
-  const label = tags.brand ?? tags.name ?? '';
-  for (const [id, b] of Object.entries(BRANDS)) if (b.name.test(label)) return id;
-  return null;
+export function photonUrl(chain, here) {
+  const params = new URLSearchParams({
+    q: BRANDS[chain].query,
+    lat: roundCoord(here.lat),
+    lon: roundCoord(here.lon),
+    bbox: bboxAround({ lat: roundCoord(here.lat), lon: roundCoord(here.lon) }, SEARCH_MILES + 1).join(','),
+    osm_tag: 'amenity',
+    limit: 25,
+  });
+  return `https://photon.komoot.io/api/?${params}`;
 }
 
-function addressOf(tags) {
-  const street = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
-  return [street, tags['addr:city']].filter(Boolean).join(', ') || null;
+export function nominatimUrl(chain, here) {
+  const [w, s, e, n] = bboxAround({ lat: roundCoord(here.lat), lon: roundCoord(here.lon) }, SEARCH_MILES + 1);
+  const params = new URLSearchParams({
+    q: BRANDS[chain].query,
+    format: 'jsonv2',
+    addressdetails: 1,
+    limit: 25,
+    viewbox: [w, n, e, s].join(','),
+    bounded: 1,
+  });
+  return `https://nominatim.openstreetmap.org/search?${params}`;
 }
 
-// Overpass JSON → known-chain places with distance from `here`, nearest first.
-export function parsePlaces(json, here) {
-  const seen = new Set();
-  const places = [];
-  for (const el of json?.elements ?? []) {
-    const tags = el.tags ?? {};
-    const chain = chainOf(tags);
-    const lat = el.lat ?? el.center?.lat;
-    const lon = el.lon ?? el.center?.lon;
-    if (!chain || lat == null || lon == null) continue;
-    // Skip closed locations and drive-through-only kiosks with no position.
-    if (tags['disused:amenity'] || /^(no|closed)$/.test(tags.opening_hours ?? '')) continue;
-    const key = `${el.type}/${el.id}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    places.push({
-      chain,
-      lat,
-      lon,
-      miles: milesBetween(here, { lat, lon }),
-      address: addressOf(tags),
-      zip: tags['addr:postcode']?.slice(0, 5) ?? null,
+function place(chain, lat, lon, a, here) {
+  const street = [a.housenumber, a.street].filter(Boolean).join(' ');
+  return {
+    chain,
+    lat,
+    lon,
+    miles: milesBetween(here, { lat, lon }),
+    address: [street, a.city].filter(Boolean).join(', ') || null,
+    zip: a.postcode?.slice(0, 5) ?? null,
+  };
+}
+
+// Photon GeoJSON → this chain's places. Results are restaurants (amenity)
+// whose name matches the chain.
+export function parsePhoton(chain, json, here) {
+  return (json?.features ?? [])
+    .filter((f) => f.properties?.osm_key === 'amenity' && BRANDS[chain].name.test(f.properties.name ?? ''))
+    .map((f) => {
+      const [lon, lat] = f.geometry.coordinates;
+      return place(chain, lat, lon, f.properties, here);
     });
-  }
-  return places.sort((a, b) => a.miles - b.miles);
+}
+
+export function parseNominatim(chain, json, here) {
+  return (Array.isArray(json) ? json : [])
+    .filter((r) => r.category === 'amenity' && BRANDS[chain].name.test(r.name ?? ''))
+    .map((r) => {
+      const a = r.address ?? {};
+      const addr = { housenumber: a.house_number, street: a.road, city: a.city ?? a.town ?? a.village, postcode: a.postcode };
+      return place(chain, Number(r.lat), Number(r.lon), addr, here);
+    });
+}
+
+// All places of every chain near `here`, nearest first.
+export function sortPlaces(lists) {
+  return lists.flat().sort((a, b) => a.miles - b.miles);
 }
 
 // The nearest location of each chain.
@@ -109,19 +132,34 @@ export function nearestByChain(places) {
   return out;
 }
 
-// Rounded to 2 decimals (about 1 km) so the location sent is coarse and
-// nearby users share cached results.
-export const roundCoord = (n) => Math.round(n * 100) / 100;
-
-export async function fetchPlaces(here, { fetchImpl = fetch, timeoutMs = 30000 } = {}) {
+async function getJson(fetchImpl, url, timeoutMs) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetchImpl(`/api/nearby?lat=${roundCoord(here.lat)}&lon=${roundCoord(here.lon)}`, { signal: ctrl.signal });
+    const res = await fetchImpl(url, { signal: ctrl.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return parsePlaces(await res.json(), here);
+    return await res.json();
   } finally {
     clearTimeout(timer);
+  }
+}
+
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Photon for every chain at once; if Photon fails, Nominatim one chain at a
+// time (its usage policy allows one request a second).
+export async function fetchPlaces(here, { fetchImpl = (...a) => fetch(...a), timeoutMs = 15000, gapMs = 1100 } = {}) {
+  const chains = Object.keys(BRANDS);
+  try {
+    const lists = await Promise.all(chains.map(async (c) => parsePhoton(c, await getJson(fetchImpl, photonUrl(c, here), timeoutMs), here)));
+    return sortPlaces(lists);
+  } catch {
+    const lists = [];
+    for (const [i, c] of chains.entries()) {
+      if (i > 0) await pause(gapMs);
+      lists.push(parseNominatim(c, await getJson(fetchImpl, nominatimUrl(c, here), timeoutMs), here));
+    }
+    return sortPlaces(lists);
   }
 }
 

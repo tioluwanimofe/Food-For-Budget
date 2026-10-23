@@ -1,0 +1,17 @@
+{
+  "mcdonalds": { "type": "FeatureCollection", "features": [
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-86.7875493, 36.1561382] }, "properties": { "osm_type": "N", "osm_id": 1, "osm_key": "amenity", "osm_value": "fast_food", "name": "McDonald's", "housenumber": "1601", "street": "Broadway", "city": "Nashville", "postcode": "37203" } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-86.8121648, 36.1459599] }, "properties": { "osm_key": "amenity", "osm_value": "fast_food", "name": "McDonald's", "street": "West End Avenue", "city": "Nashville" } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-86.78, 36.16] }, "properties": { "osm_key": "highway", "osm_value": "bus_stop", "name": "McDonald's Stop" } }
+  ] },
+  "tacobell": { "type": "FeatureCollection", "features": [
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-86.7641846, 36.105553] }, "properties": { "osm_key": "amenity", "osm_value": "fast_food", "name": "Taco Bell", "street": "Powell Avenue" } }
+  ] },
+  "chipotle": { "type": "FeatureCollection", "features": [
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-86.7988535, 36.1472748] }, "properties": { "osm_key": "amenity", "osm_value": "fast_food", "name": "Chipotle", "street": "21st Avenue South", "postcode": "37212-1234" } },
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-86.79, 36.15] }, "properties": { "osm_key": "amenity", "osm_value": "restaurant", "name": "Taqueria Chipotle Express" } }
+  ] },
+  "panera": { "type": "FeatureCollection", "features": [
+    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-86.7790075, 36.1618043] }, "properties": { "osm_key": "amenity", "osm_value": "fast_food", "name": "Panera Bread", "street": "Commerce Street", "city": "Nashville" } }
+  ] }
+}
