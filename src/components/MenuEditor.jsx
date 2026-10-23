@@ -1,4 +1,4 @@
-export default function MenuEditor({ items, prices, onPrices, favorites, onFavorites, onClose }) {
+export default function MenuEditor({ menus, prices, onPrices, favorites, onFavorites, onClose }) {
   function setPrice(id, value) {
     const next = { ...prices };
     const n = Number(value);
@@ -17,40 +17,45 @@ export default function MenuEditor({ items, prices, onPrices, favorites, onFavor
         <h2 id="menu-title">Your menu</h2>
         <p className="fine">
           Star your favorites for "Just pick for me". Starting prices are national average estimates; change any that
-          differ at your McDonald's. Everything is saved on this device.
+          differ near you. Everything is saved on this device.
         </p>
-        <ul className="prices">
-          {items.map((item) => {
-            const fav = favorites.includes(item.id);
-            return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className={`star${fav ? ' on' : ''}`}
-                  aria-pressed={fav}
-                  aria-label={`Favorite ${item.name}`}
-                  onClick={() => toggleFavorite(item.id)}
-                >
-                  {fav ? '★' : '☆'}
-                </button>
-                <label htmlFor={`p-${item.id}`}>{item.name}</label>
-                <div className="money small">
-                  <span aria-hidden="true">$</span>
-                  <input
-                    id={`p-${item.id}`}
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="0.01"
-                    defaultValue={item.price.toFixed(2)}
-                    onChange={(e) => setPrice(item.id, e.target.value)}
-                    className={item.edited ? 'edited' : ''}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        {menus.map(({ chain, items }) => (
+          <section key={chain.id}>
+            {menus.length > 1 && <h3 className="chain-name">{chain.name}</h3>}
+            <ul className="prices">
+              {items.map((item) => {
+                const fav = favorites.includes(item.id);
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      className={`star${fav ? ' on' : ''}`}
+                      aria-pressed={fav}
+                      aria-label={`Favorite ${item.name}`}
+                      onClick={() => toggleFavorite(item.id)}
+                    >
+                      {fav ? '★' : '☆'}
+                    </button>
+                    <label htmlFor={`p-${item.id}`}>{item.name}</label>
+                    <div className="money small">
+                      <span aria-hidden="true">$</span>
+                      <input
+                        id={`p-${item.id}`}
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.01"
+                        defaultValue={item.price.toFixed(2)}
+                        onChange={(e) => setPrice(item.id, e.target.value)}
+                        className={item.edited ? 'edited' : ''}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
         <div className="row">
           <button type="button" className="link" onClick={() => { onPrices({}); onClose(); }}>
             Reset prices

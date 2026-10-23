@@ -1,0 +1,304 @@
+{
+  "id": "tacobell",
+  "name": "Taco Bell",
+  "pricesAsOf": "2025-06",
+  "priceNote": "National estimates (sixstoreys.com, mid-2025). Prices vary by location; edit them to match your local menu.",
+  "nutritionNote": "From fastfoodnutrition.org (Taco Bell page updated Apr 2026). Verify against Taco Bell's official nutrition info.",
+  "items": [
+    {
+      "id": "tb-crunchy-taco",
+      "name": "Crunchy Taco",
+      "say": [
+        "Crunchy Taco",
+        "Crunchy Tacos"
+      ],
+      "price": 1.79,
+      "protein": 8,
+      "calories": 170,
+      "carbs": 13,
+      "fat": 9,
+      "sodium": 310,
+      "allergens": [
+        "milk",
+        "soy"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-soft-taco",
+      "name": "Soft Taco",
+      "say": [
+        "Soft Taco",
+        "Soft Tacos"
+      ],
+      "price": 1.79,
+      "protein": 9,
+      "calories": 180,
+      "carbs": 17,
+      "fat": 9,
+      "sodium": 500,
+      "allergens": [
+        "milk",
+        "soy",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-crunchy-taco-supreme",
+      "name": "Crunchy Taco Supreme",
+      "say": [
+        "Crunchy Taco Supreme",
+        "Crunchy Taco Supremes"
+      ],
+      "price": 2.59,
+      "protein": 8,
+      "calories": 190,
+      "carbs": 15,
+      "fat": 11,
+      "sodium": 340,
+      "allergens": [
+        "milk",
+        "soy"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-bean-burrito",
+      "name": "Bean Burrito",
+      "say": [
+        "Bean Burrito",
+        "Bean Burritos"
+      ],
+      "price": 1.69,
+      "protein": 13,
+      "calories": 350,
+      "carbs": 54,
+      "fat": 9,
+      "sodium": 1000,
+      "allergens": [
+        "milk",
+        "wheat"
+      ],
+      "meat": null
+    },
+    {
+      "id": "tb-cheesy-bean-rice",
+      "name": "Cheesy Bean and Rice Burrito",
+      "say": [
+        "Cheesy Bean and Rice Burrito",
+        "Cheesy Bean and Rice Burritos"
+      ],
+      "price": 1.19,
+      "protein": 10,
+      "calories": 410,
+      "carbs": 56,
+      "fat": 16,
+      "sodium": 880,
+      "allergens": [
+        "milk",
+        "egg",
+        "wheat"
+      ],
+      "meat": null
+    },
+    {
+      "id": "tb-burrito-supreme",
+      "name": "Burrito Supreme (beef)",
+      "say": [
+        "Beef Burrito Supreme",
+        "Beef Burrito Supremes"
+      ],
+      "price": 4.99,
+      "protein": 16,
+      "calories": 390,
+      "carbs": 51,
+      "fat": 14,
+      "sodium": 1110,
+      "allergens": [
+        "milk",
+        "soy",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-beefy-5-layer",
+      "name": "Beefy 5-Layer Burrito",
+      "say": [
+        "Beefy 5-Layer Burrito",
+        "Beefy 5-Layer Burritos"
+      ],
+      "price": 3.69,
+      "protein": 18,
+      "calories": 490,
+      "carbs": 63,
+      "fat": 18,
+      "sodium": 1250,
+      "allergens": [
+        "milk",
+        "soy",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-chicken-quesadilla",
+      "name": "Chicken Quesadilla",
+      "say": [
+        "Chicken Quesadilla",
+        "Chicken Quesadillas"
+      ],
+      "price": 5.19,
+      "protein": 27,
+      "calories": 510,
+      "carbs": 38,
+      "fat": 26,
+      "sodium": 1250,
+      "allergens": [
+        "milk",
+        "egg",
+        "wheat"
+      ],
+      "meat": "chicken"
+    },
+    {
+      "id": "tb-steak-quesadilla",
+      "name": "Steak Quesadilla",
+      "say": [
+        "Steak Quesadilla",
+        "Steak Quesadillas"
+      ],
+      "price": 5.99,
+      "protein": 27,
+      "calories": 520,
+      "carbs": 38,
+      "fat": 27,
+      "sodium": 1230,
+      "allergens": [
+        "milk",
+        "egg",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-crunchwrap",
+      "name": "Crunchwrap Supreme",
+      "say": [
+        "Crunchwrap Supreme",
+        "Crunchwrap Supremes"
+      ],
+      "price": 5.29,
+      "protein": 16,
+      "calories": 530,
+      "carbs": 71,
+      "fat": 21,
+      "sodium": 1200,
+      "allergens": [
+        "milk",
+        "soy",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-chalupa",
+      "name": "Chalupa Supreme (beef)",
+      "say": [
+        "Beef Chalupa Supreme",
+        "Beef Chalupa Supremes"
+      ],
+      "price": 4.79,
+      "protein": 13,
+      "calories": 350,
+      "carbs": 33,
+      "fat": 18,
+      "sodium": 560,
+      "allergens": [
+        "milk",
+        "soy",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-cheesy-gordita",
+      "name": "Cheesy Gordita Crunch",
+      "say": [
+        "Cheesy Gordita Crunch",
+        "Cheesy Gordita Crunches"
+      ],
+      "price": 4.99,
+      "protein": 20,
+      "calories": 500,
+      "carbs": 41,
+      "fat": 28,
+      "sodium": 850,
+      "allergens": [
+        "milk",
+        "egg",
+        "soy",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-mexican-pizza",
+      "name": "Mexican Pizza",
+      "say": [
+        "Mexican Pizza",
+        "Mexican Pizzas"
+      ],
+      "price": 5.39,
+      "protein": 19,
+      "calories": 530,
+      "carbs": 48,
+      "fat": 29,
+      "sodium": 860,
+      "allergens": [
+        "milk",
+        "soy",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "tb-chips-cheese",
+      "name": "Chips and Nacho Cheese Sauce",
+      "say": [
+        "Chips and Nacho Cheese",
+        "orders of Chips and Nacho Cheese"
+      ],
+      "price": 2.39,
+      "protein": 2,
+      "calories": 220,
+      "carbs": 24,
+      "fat": 13,
+      "sodium": 250,
+      "allergens": [
+        "milk",
+        "wheat"
+      ],
+      "meat": null
+    },
+    {
+      "id": "tb-cinnamon-twists",
+      "name": "Cinnamon Twists",
+      "say": [
+        "Cinnamon Twists",
+        "orders of Cinnamon Twists"
+      ],
+      "price": 1.19,
+      "protein": 1,
+      "calories": 170,
+      "carbs": 27,
+      "fat": 6,
+      "sodium": 210,
+      "allergens": [
+        "wheat"
+      ],
+      "meat": null
+    }
+  ]
+}

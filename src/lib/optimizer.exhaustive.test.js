@@ -2,7 +2,7 @@
 // possible order, for cheapest meal (budgets x protein targets x caps) and
 // just pick for me (every set of favorites x budgets x calorie ceilings).
 import { expect, it } from 'vitest';
-import menu from '../data/menu.json';
+import menu from '../data/chains/mcdonalds.json';
 import { solve, foodBudget, macroDeviation } from './optimizer.js';
 
 const TAX = 0.0925;

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import menu from './data/menu.json';
+import { CHAINS, CHAIN_BY_ID } from './data/chains/index.js';
 import defaults from './data/settings.json';
 import { applyFilters, LOW_SODIUM_MG } from './lib/filters.js';
 import { GOALS } from './lib/goals.js';
-import { planOrder } from './lib/optimizer.js';
+import { planAcrossChains } from './lib/optimizer.js';
 import { taxForZip } from './lib/tax.js';
 import { loadSaved, save } from './lib/storage.js';
 import BudgetForm from './components/BudgetForm.jsx';
@@ -19,6 +19,7 @@ export default function App() {
   const [zip, setZip] = useState(saved.zip ?? '');
   const [cap, setCap] = useState(saved.cap ?? defaults.quantityCap);
   const [favorites, setFavorites] = useState(saved.favorites ?? []);
+  const [chain, setChain] = useState(saved.chain in CHAIN_BY_ID ? saved.chain : 'all');
   const [filters, setFilters] = useState({ vegetarian: false, noPork: false, lowSodium: false, avoid: [], ...saved.filters });
   const [form, setForm] = useState({
     budget: 10,
@@ -36,8 +37,8 @@ export default function App() {
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(
-    () => save({ prices, taxRate, taxLabel, zip, cap, favorites, filters, goal: form.goal }),
-    [prices, taxRate, taxLabel, zip, cap, favorites, filters, form.goal],
+    () => save({ prices, taxRate, taxLabel, zip, cap, favorites, filters, chain, goal: form.goal }),
+    [prices, taxRate, taxLabel, zip, cap, favorites, filters, chain, form.goal],
   );
 
   function changeZip(value) {
@@ -65,16 +66,21 @@ export default function App() {
     });
   }, [form.goal]);
 
-  const items = useMemo(
+  // The chains in play ('all' or one chain), each with the user's prices and favorites applied.
+  const menus = useMemo(
     () =>
-      menu.items.map((i) => ({
-        ...i,
-        price: prices[i.id] ?? i.price,
-        edited: i.id in prices,
-        favorite: favorites.includes(i.id),
+      CHAINS.filter((c) => chain === 'all' || c.id === chain).map((c) => ({
+        chain: c,
+        items: c.items.map((i) => ({
+          ...i,
+          price: prices[i.id] ?? i.price,
+          edited: i.id in prices,
+          favorite: favorites.includes(i.id),
+        })),
       })),
-    [prices, favorites],
+    [chain, prices, favorites],
   );
+  const favoriteCount = menus.reduce((n, m) => n + m.items.filter((i) => i.favorite).length, 0);
 
   const revealDone = useCallback(() => setPhase('result'), []);
 
@@ -84,7 +90,7 @@ export default function App() {
     const num = (key) => Number(form[key]) || undefined;
     const goalNum = (key) => (goalKeys.includes(key) ? num(key) : undefined);
     setPlan(
-      planOrder(applyFilters(items, filters), {
+      planAcrossChains(menus.map((m) => ({ ...m, items: applyFilters(m.items, filters) })), {
         goal: form.goal,
         budget: Number(form.budget),
         taxRate,
@@ -125,7 +131,9 @@ export default function App() {
             cap={cap}
             onCap={setCap}
             onEditMenu={() => setShowMenu(true)}
-            favoriteCount={favorites.length}
+            favoriteCount={favoriteCount}
+            chain={chain}
+            onChain={setChain}
             filters={filters}
             onFilters={setFilters}
           />
@@ -134,6 +142,7 @@ export default function App() {
         {phase === 'result' && <OrderCard
             plan={plan}
             goal={form.goal}
+            chain={chain}
             filtered={filters.vegetarian || filters.noPork || filters.lowSodium || filters.avoid.length > 0}
             taxRate={taxRate}
             onBack={() => setPhase('form')}
@@ -142,7 +151,7 @@ export default function App() {
 
       {showMenu && (
         <MenuEditor
-          items={items}
+          menus={menus}
           prices={prices}
           onPrices={setPrices}
           favorites={favorites}
@@ -152,8 +161,12 @@ export default function App() {
       )}
 
       <footer>
-        <p>{menu.priceNote}</p>
-        <p>Not affiliated with McDonald's. Not medical or nutrition advice.</p>
+        {chain === 'all' ? (
+          <p>Prices are national estimates and vary by location. Edit them to match your local menus.</p>
+        ) : (
+          <p>{CHAIN_BY_ID[chain].priceNote}</p>
+        )}
+        <p>Not affiliated with {CHAINS.map((c) => c.name).join(', ')}. Not medical or nutrition advice.</p>
       </footer>
     </div>
   );

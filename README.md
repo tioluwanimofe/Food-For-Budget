@@ -2,7 +2,7 @@
 
 Say "I'm hungry," enter how much you want to spend, and Food for Budget tells you exactly what to order: the most protein your money can buy, with tax included, and a line to read to the cashier.
 
-Version 1 covers McDonald's only. It is an installable PWA (React + Vite) and the optimizer runs entirely in the browser, so there is no server.
+It covers McDonald's, Taco Bell, Chipotle and Panera Bread. Pick one chain, or "All chains" to plan the best order at each and show the winner (an order always comes from one restaurant), with how the others compare. It is an installable PWA (React + Vite) and the optimizer runs entirely in the browser, so there is no server.
 
 ## Run it
 
@@ -37,16 +37,23 @@ The order is an integer linear program solved with [javascript-lp-solver](https:
 
 Goals are defined in `src/lib/goals.js`. Balanced macros minimizes the total gap, in calories, between each macro and its target share, using one deviation variable per macro.
 
-Diet and allergy filters (`src/lib/filters.js`) work with every goal: vegetarian, no pork, avoid milk / egg / soy / wheat / sesame, and low sodium (whole order under 1,000 mg). The "next best option" re-solves with each item of the best order removed in turn, in case something is out. Every answer is checked against the rules before it is shown, because the solver can occasionally report an impossible program as feasible. `optimizer.exhaustive.test.js` checks the solver against brute force over every possible order (all favorites sets for "Just pick for me", and every goal with and without limits).
+Diet and allergy filters (`src/lib/filters.js`) work with every goal: vegetarian, no pork, avoid milk / egg / soy / wheat / sesame, and low sodium (whole order under 1,000 mg). The "next best option" re-solves with each item of the best order removed in turn, in case something is out. Items with unknown allergens are left out when any allergen is avoided, and items with unknown sodium when low sodium is on. Every answer is checked against the rules before it is shown, because the solver can occasionally report an impossible program as feasible. `optimizer.exhaustive.test.js` checks the solver against brute force over every possible order (all favorites sets for "Just pick for me", and every goal with and without limits), and `chains.test.js` does the same for every chain's menu.
 
 ## Data
 
 | File | What it holds |
 | --- | --- |
-| `src/data/menu.json` | Items and deals with price, protein, calories, carbs, fat, sodium, allergens and meat |
+| `src/data/chains/*.json` | One file per chain: items and deals with price, protein, calories, carbs, fat, sodium, allergens and meat (`null` means unknown), plus price and nutrition notes. `index.js` lists the chains |
 | `src/data/settings.json` | Default sales tax (9.25%, Nashville) and quantity cap |
 | `src/data/tax-rates.json` | Average combined sales tax per state (Tax Foundation, July 1, 2026), ZIP prefix → state ranges, and local overrides (Nashville 9.25%) |
 
-Prices are national average estimates (October 2026). Users can override them and star favorites on their device. Protein, calories and carbs come from the spec; fat, sodium and allergens come from fastfoodnutrition.org. All nutrition figures are approximate and must be checked against the official McDonald's Nutrition Calculator before launch. Meal Deal nutrition assumes water or a diet drink.
+Prices are national average estimates and vary by location. Users can override them and star favorites on their device.
 
-Not affiliated with McDonald's. Not medical or nutrition advice.
+- **McDonald's:** prices as of October 2026. Protein, calories and carbs come from the spec; fat, sodium and allergens come from fastfoodnutrition.org. Meal Deal nutrition assumes water or a diet drink.
+- **Taco Bell:** prices from sixstoreys.com (mid-2025), nutrition from fastfoodnutrition.org.
+- **Chipotle:** prices from sixstoreys.com (mid-2025, approximate by protein). Bowls and burritos are built from Chipotle's official US nutrition PDF (March 2025) as protein, white rice, black beans, tomato salsa, cheese and lettuce.
+- **Panera Bread:** prices from sixstoreys.com (mid-2025). Calories, fat and protein come from fastfoodnutrition.org; carbs are estimated for many items (`carbsEstimated`), and sodium and allergens are unknown for most.
+
+All nutrition figures are approximate and must be checked against each chain's official nutrition information before launch.
+
+Not affiliated with McDonald's, Taco Bell, Chipotle or Panera Bread. Not medical or nutrition advice.

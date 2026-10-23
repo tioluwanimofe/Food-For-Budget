@@ -1,0 +1,431 @@
+{
+  "id": "panera",
+  "name": "Panera Bread",
+  "pricesAsOf": "2025-07",
+  "priceNote": "National estimates (sixstoreys.com, mid-2025). You Pick Two combos are not included. Prices vary by location; edit them to match your local menu.",
+  "nutritionNote": "Calories, fat and protein from fastfoodnutrition.org. Carbs for many items are estimated from those numbers, and sodium and allergens are unknown for most, so those items are left out when a sodium or allergy filter is on. Verify against Panera's official nutrition info.",
+  "items": [
+    {
+      "id": "pn-bravo",
+      "name": "Bacon Turkey Bravo",
+      "say": [
+        "Bacon Turkey Bravo",
+        "Bacon Turkey Bravos"
+      ],
+      "price": 10.99,
+      "protein": 45,
+      "calories": 640,
+      "carbs": 68,
+      "fat": 21,
+      "sodium": 1680,
+      "allergens": null,
+      "meat": "pork"
+    },
+    {
+      "id": "pn-bravo-half",
+      "name": "Half Bacon Turkey Bravo",
+      "say": [
+        "half Bacon Turkey Bravo",
+        "half Bacon Turkey Bravos"
+      ],
+      "price": 6.99,
+      "protein": 23,
+      "calories": 320,
+      "carbs": 34,
+      "fat": 11,
+      "sodium": 840,
+      "allergens": null,
+      "meat": "pork"
+    },
+    {
+      "id": "pn-napa",
+      "name": "Napa Almond Chicken Salad Sandwich",
+      "say": [
+        "Napa Almond Chicken Salad Sandwich",
+        "Napa Almond Chicken Salad Sandwiches"
+      ],
+      "price": 9.99,
+      "protein": 28,
+      "calories": 630,
+      "carbs": 62,
+      "fat": 32,
+      "sodium": 750,
+      "allergens": null,
+      "meat": "chicken"
+    },
+    {
+      "id": "pn-napa-half",
+      "name": "Half Napa Almond Chicken Salad Sandwich",
+      "say": [
+        "half Napa Almond Chicken Salad Sandwich",
+        "half Napa Almond Chicken Salad Sandwiches"
+      ],
+      "price": 6.49,
+      "protein": 14,
+      "calories": 320,
+      "carbs": 31,
+      "fat": 16,
+      "sodium": 380,
+      "allergens": null,
+      "meat": "chicken"
+    },
+    {
+      "id": "pn-avo-melt",
+      "name": "Chipotle Chicken Avo Melt",
+      "say": [
+        "Chipotle Chicken Avo Melt",
+        "Chipotle Chicken Avo Melts"
+      ],
+      "price": 10.99,
+      "protein": 41,
+      "calories": 850,
+      "carbs": 79,
+      "fat": 41,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-avo-melt-half",
+      "name": "Half Chipotle Chicken Avo Melt",
+      "say": [
+        "half Chipotle Chicken Avo Melt",
+        "half Chipotle Chicken Avo Melts"
+      ],
+      "price": 6.99,
+      "protein": 21,
+      "calories": 430,
+      "carbs": 39,
+      "fat": 21,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-frontega",
+      "name": "Frontega Chicken",
+      "say": [
+        "Frontega Chicken",
+        "Frontega Chickens"
+      ],
+      "price": 9.99,
+      "protein": 39,
+      "calories": 730,
+      "carbs": 78,
+      "fat": 29,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-frontega-half",
+      "name": "Half Frontega Chicken",
+      "say": [
+        "half Frontega Chicken",
+        "half Frontega Chickens"
+      ],
+      "price": 6.49,
+      "protein": 19,
+      "calories": 360,
+      "carbs": 40,
+      "fat": 14,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-med-veggie",
+      "name": "Mediterranean Veggie",
+      "say": [
+        "Mediterranean Veggie",
+        "Mediterranean Veggies"
+      ],
+      "price": 8.99,
+      "protein": 18,
+      "calories": 470,
+      "carbs": 70,
+      "fat": 13,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-med-veggie-half",
+      "name": "Half Mediterranean Veggie",
+      "say": [
+        "half Mediterranean Veggie",
+        "half Mediterranean Veggies"
+      ],
+      "price": 5.99,
+      "protein": 9,
+      "calories": 220,
+      "carbs": 32,
+      "fat": 6,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-grilled-cheese",
+      "name": "Classic Grilled Cheese",
+      "say": [
+        "Classic Grilled Cheese",
+        "Classic Grilled Cheeses"
+      ],
+      "price": 8.49,
+      "protein": 31,
+      "calories": 700,
+      "carbs": 65,
+      "fat": 35,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-grilled-cheese-half",
+      "name": "Half Classic Grilled Cheese",
+      "say": [
+        "half Classic Grilled Cheese",
+        "half Classic Grilled Cheeses"
+      ],
+      "price": 5.49,
+      "protein": 16,
+      "calories": 350,
+      "carbs": 31,
+      "fat": 18,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-cobb",
+      "name": "Green Goddess Cobb Salad with Chicken",
+      "say": [
+        "Green Goddess Cobb Salad with Chicken",
+        "Green Goddess Cobb Salads with Chicken"
+      ],
+      "price": 11.49,
+      "protein": 42,
+      "calories": 530,
+      "carbs": 23,
+      "fat": 30,
+      "sodium": null,
+      "allergens": null,
+      "meat": "pork",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-cobb-half",
+      "name": "Half Green Goddess Cobb Salad with Chicken",
+      "say": [
+        "half Green Goddess Cobb Salad with Chicken",
+        "half Green Goddess Cobb Salads with Chicken"
+      ],
+      "price": 7.99,
+      "protein": 21,
+      "calories": 260,
+      "carbs": 10,
+      "fat": 15,
+      "sodium": null,
+      "allergens": null,
+      "meat": "pork",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-fuji",
+      "name": "Fuji Apple Salad with Chicken",
+      "say": [
+        "Fuji Apple Salad with Chicken",
+        "Fuji Apple Salads with Chicken"
+      ],
+      "price": 11.49,
+      "protein": 32,
+      "calories": 580,
+      "carbs": 32,
+      "fat": 36,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-fuji-half",
+      "name": "Half Fuji Apple Salad with Chicken",
+      "say": [
+        "half Fuji Apple Salad with Chicken",
+        "half Fuji Apple Salads with Chicken"
+      ],
+      "price": 7.99,
+      "protein": 16,
+      "calories": 290,
+      "carbs": 16,
+      "fat": 18,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-caesar",
+      "name": "Caesar Salad with Chicken",
+      "say": [
+        "Caesar Salad with Chicken",
+        "Caesar Salads with Chicken"
+      ],
+      "price": 10.99,
+      "protein": 34,
+      "calories": 470,
+      "carbs": 20,
+      "fat": 28,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-caesar-half",
+      "name": "Half Caesar Salad with Chicken",
+      "say": [
+        "half Caesar Salad with Chicken",
+        "half Caesar Salads with Chicken"
+      ],
+      "price": 7.49,
+      "protein": 17,
+      "calories": 230,
+      "carbs": 9,
+      "fat": 14,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-broc-cup",
+      "name": "Broccoli Cheddar Soup (cup)",
+      "say": [
+        "cup of Broccoli Cheddar Soup",
+        "cups of Broccoli Cheddar Soup"
+      ],
+      "price": 5.99,
+      "protein": 9,
+      "calories": 230,
+      "carbs": 19,
+      "fat": 13,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-broc-bowl",
+      "name": "Broccoli Cheddar Soup (bowl)",
+      "say": [
+        "bowl of Broccoli Cheddar Soup",
+        "bowls of Broccoli Cheddar Soup"
+      ],
+      "price": 7.99,
+      "protein": 14,
+      "calories": 360,
+      "carbs": 29,
+      "fat": 21,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-noodle-cup",
+      "name": "Chicken Noodle Soup (cup)",
+      "say": [
+        "cup of Chicken Noodle Soup",
+        "cups of Chicken Noodle Soup"
+      ],
+      "price": 5.99,
+      "protein": 10,
+      "calories": 110,
+      "carbs": 11,
+      "fat": 3,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-noodle-bowl",
+      "name": "Chicken Noodle Soup (bowl)",
+      "say": [
+        "bowl of Chicken Noodle Soup",
+        "bowls of Chicken Noodle Soup"
+      ],
+      "price": 7.99,
+      "protein": 14,
+      "calories": 160,
+      "carbs": 15,
+      "fat": 5,
+      "sodium": null,
+      "allergens": null,
+      "meat": "chicken",
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-tomato-cup",
+      "name": "Creamy Tomato Soup (cup)",
+      "say": [
+        "cup of Creamy Tomato Soup",
+        "cups of Creamy Tomato Soup"
+      ],
+      "price": 5.99,
+      "protein": 4,
+      "calories": 230,
+      "carbs": 20,
+      "fat": 15,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-tomato-bowl",
+      "name": "Creamy Tomato Soup (bowl)",
+      "say": [
+        "bowl of Creamy Tomato Soup",
+        "bowls of Creamy Tomato Soup"
+      ],
+      "price": 7.99,
+      "protein": 5,
+      "calories": 340,
+      "carbs": 33,
+      "fat": 21,
+      "sodium": null,
+      "allergens": null,
+      "meat": null,
+      "carbsEstimated": true
+    },
+    {
+      "id": "pn-bagel",
+      "name": "Plain Bagel",
+      "say": [
+        "Plain Bagel",
+        "Plain Bagels"
+      ],
+      "price": 1.69,
+      "protein": 10,
+      "calories": 280,
+      "carbs": 57,
+      "fat": 1,
+      "sodium": 410,
+      "allergens": [
+        "wheat"
+      ],
+      "meat": null
+    }
+  ]
+}

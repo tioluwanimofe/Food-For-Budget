@@ -1,3 +1,4 @@
+import { CHAINS } from '../data/chains/index.js';
 import { ALLERGENS } from '../lib/filters.js';
 import { GOALS, GOAL_IDS } from '../lib/goals.js';
 
@@ -16,6 +17,8 @@ export default function BudgetForm({
   favoriteCount,
   filters,
   onFilters,
+  chain,
+  onChain,
 }) {
   const set = (key) => (e) => onChange({ ...form, [key]: e.target.value });
   const goal = GOALS[form.goal];
@@ -52,6 +55,19 @@ export default function BudgetForm({
           />
         </div>
       </label>
+
+      <fieldset className="goal">
+        <legend>Where</legend>
+        {[{ id: 'all', name: 'All chains' }, ...CHAINS].map((c) => (
+          <label key={c.id} className={`chip${chain === c.id ? ' selected' : ''}`}>
+            <input type="radio" name="chain" value={c.id} checked={chain === c.id} onChange={() => onChain(c.id)} />
+            {c.name}
+          </label>
+        ))}
+        <p className="fine blurb">
+          {chain === 'all' ? 'Checks every chain and picks the one that does best. The order comes from one place.' : 'Only this menu.'}
+        </p>
+      </fieldset>
 
       <fieldset className="goal">
         <legend>Goal</legend>
