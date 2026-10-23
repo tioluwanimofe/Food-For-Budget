@@ -1,0 +1,32 @@
+name: diag-nearby
+on:
+  push:
+    branches: [diag/nearby]
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Live function
+        run: |
+          curl -sS -i -m 70 "https://food-for-budget.vercel.app/api/nearby?lat=36.16&lon=-86.78" | head -c 3000; echo
+      - name: Overpass endpoints directly
+        run: |
+          Q='[out:json][timeout:20];nwr["brand:wikidata"="Q465751"](around:5000,36.16,-86.78);out center tags;'
+          for u in https://overpass-api.de/api/interpreter https://overpass.private.coffee/api/interpreter https://maps.mail.ru/osm/tools/overpass/api/interpreter; do
+            echo "== $u"
+            curl -sS -m 40 -o out.txt -w "status %{http_code} time %{time_total}\n" -A "FoodForBudget/1.0 (+https://food-for-budget.vercel.app)" -e "https://food-for-budget.vercel.app/" --data-urlencode "data=$Q" "$u"
+            head -c 400 out.txt; echo
+          done
+      - name: Handler with real fetch
+        run: |
+          cat > t.mjs <<'JS'
+          import handler from './api/nearby.js';
+          const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json(b) { this.body = b; } };
+          const t = Date.now();
+          await handler({ query: { lat: '36.16', lon: '-86.78' } }, res);
+          console.log(res.code, Date.now() - t, 'ms', JSON.stringify(res.body).slice(0, 600));
+          JS
+          node t.mjs
