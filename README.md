@@ -22,10 +22,19 @@ On [Vercel](https://vercel.com), sign in with GitHub and import this repo. Verce
 The order is an integer linear program solved with [javascript-lp-solver](https://github.com/JWally/jsLPSolver) (`src/lib/optimizer.js`):
 
 - **Choose:** a whole-number quantity of each menu item or deal
-- **Maximize:** total protein
+- **Optimize:** depends on the goal (below)
 - **Subject to:** pre-tax cost ≤ budget ÷ (1 + tax rate), optional calorie and carb limits, and each item ≤ its cap (default 3)
 
-The "next best option" re-solves with each item of the best order removed in turn, in case something is out.
+| Goal | Optimizes | Required input |
+| --- | --- | --- |
+| Max protein (default) | Most protein | none |
+| Calorie target | Most protein | calories max (default 600) |
+| Cheapest meal | Lowest cost | protein at least (default 40 g) |
+| Low carb | Most protein | carbs max (default 20 g) |
+| Most food | Most calories | none |
+| Just pick for me | Most calories, from starred favorites, max 2 of each | favorites |
+
+Goals are defined in `src/lib/goals.js`. The "next best option" re-solves with each item of the best order removed in turn, in case something is out. Every answer is checked against the rules before it is shown, because the solver can occasionally report an impossible program as feasible.
 
 ## Data
 
@@ -34,6 +43,6 @@ The "next best option" re-solves with each item of the best order removed in tur
 | `src/data/menu.json` | Items and deals with price, protein, calories and carbs |
 | `src/data/settings.json` | Default sales tax (9.25%, Nashville) and quantity cap |
 
-Prices are national average estimates (October 2026) and users can override them on their device. Nutrition figures are approximate and must be checked against the official McDonald's Nutrition Calculator before launch. Meal Deal nutrition assumes water or a diet drink.
+Prices are national average estimates (October 2026). Users can override them and star favorites on their device. Nutrition figures are approximate and must be checked against the official McDonald's Nutrition Calculator before launch. Meal Deal nutrition assumes water or a diet drink.
 
 Not affiliated with McDonald's. Not medical or nutrition advice.
