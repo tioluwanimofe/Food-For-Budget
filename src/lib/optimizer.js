@@ -70,7 +70,12 @@ export function solve(items, options) {
 
   if (g.optimize === 'deviation') addMacroRows(items, variables, constraints, macroShares(options));
 
-  const result = solver.Solve({ optimize: g.optimize, opType: g.opType, constraints, variables, ints });
+  // javascript-lp-solver ignores a constraint on the attribute being optimized
+  // (e.g. a calorie cap while maximizing calories), so the objective gets its
+  // own attribute name.
+  for (const v of Object.values(variables)) v.objective = v[g.optimize] ?? 0;
+
+  const result = solver.Solve({ optimize: 'objective', opType: g.opType, constraints, variables, ints });
   if (!result.feasible) return null;
 
   const lines = items

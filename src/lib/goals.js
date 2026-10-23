@@ -52,6 +52,8 @@ export const GOALS = {
     optimize: 'calories',
     opType: 'max',
     favoritesOnly: true,
+    // Without a ceiling, "most calories" spends the whole budget on several meals.
+    targets: [{ key: 'calorieLimit', label: 'Calories max', unit: 'cal', default: 1200 }],
     // Spread the order across favorites instead of piling up one item.
     cap: 2,
   },
