@@ -186,3 +186,8 @@ footer p { margin: 4px 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+.targets.multi { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.targets.multi .unit-input input { width: 76px; padding: 8px 6px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip.small { font-size: 0.85rem; padding: 5px 10px; }
