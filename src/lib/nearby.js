@@ -146,21 +146,33 @@ async function getJson(fetchImpl, url, timeoutMs) {
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Photon for every chain at once; if Photon fails, Nominatim one chain at a
-// time (its usage policy allows one request a second).
-export async function fetchPlaces(here, { fetchImpl = (...a) => fetch(...a), timeoutMs = 15000, gapMs = 1100 } = {}) {
-  const chains = Object.keys(BRANDS);
-  try {
-    const lists = await Promise.all(chains.map(async (c) => parsePhoton(c, await getJson(fetchImpl, photonUrl(c, here), timeoutMs), here)));
-    return sortPlaces(lists);
-  } catch {
-    const lists = [];
-    for (const [i, c] of chains.entries()) {
-      if (i > 0) await pause(gapMs);
-      lists.push(parseNominatim(c, await getJson(fetchImpl, nominatimUrl(c, here), timeoutMs), here));
+// Photon refuses bursts (503), so each chain's search starts a moment after
+// the last and is retried once; a chain that still fails tries Nominatim,
+// one request at a time (its usage policy allows one a second). A chain that
+// fails everywhere is left out; if every chain fails, this throws.
+export async function fetchPlaces(here, { fetchImpl = (...a) => fetch(...a), timeoutMs = 15000, gapMs = 1100, staggerMs = 250 } = {}) {
+  const get = (url) => getJson(fetchImpl, url, timeoutMs);
+  let nominatimQueue = Promise.resolve();
+  const viaNominatim = (c) => {
+    const run = nominatimQueue.then(() => get(nominatimUrl(c, here)));
+    nominatimQueue = run.catch(() => {}).then(() => pause(gapMs));
+    return run.then((json) => parseNominatim(c, json, here));
+  };
+  const search = async (c, i) => {
+    await pause(i * staggerMs);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return parsePhoton(c, await get(photonUrl(c, here)), here);
+      } catch {
+        await pause(gapMs);
+      }
     }
-    return sortPlaces(lists);
-  }
+    return viaNominatim(c);
+  };
+  const results = await Promise.allSettled(Object.keys(BRANDS).map(search));
+  const ok = results.filter((r) => r.status === 'fulfilled');
+  if (ok.length === 0) throw results[0].reason;
+  return sortPlaces(ok.map((r) => r.value));
 }
 
 export function locate({ geo = globalThis.navigator?.geolocation } = {}) {

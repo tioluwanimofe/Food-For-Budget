@@ -72,13 +72,28 @@ describe('OpenStreetMap search', () => {
 
   it('finds every chain, nearest first, and the nearest of each', async () => {
     const fetchImpl = photonFetch();
-    const places = await fetchPlaces(here, { fetchImpl });
+    const places = await fetchPlaces(here, { fetchImpl, staggerMs: 0 });
     expect(fetchImpl).toHaveBeenCalledTimes(4);
     expect(places.every((p, i) => i === 0 || p.miles >= places[i - 1].miles)).toBe(true);
     const nearest = nearestByChain(places);
     expect(Object.keys(nearest).sort()).toEqual(['chipotle', 'mcdonalds', 'panera', 'tacobell']);
     expect(nearest.mcdonalds.address).toBe('1601 Broadway, Nashville');
     expect(nearest.chipotle.zip).toBe('37212');
+  });
+
+  it('retries a chain Photon refused, and keeps the others', async () => {
+    const good = photonFetch();
+    let refusedOnce = false;
+    const fetchImpl = vi.fn(async (url) => {
+      if (url.includes('Taco') && !refusedOnce) {
+        refusedOnce = true;
+        return { ok: false, status: 503 };
+      }
+      return good(url);
+    });
+    const places = await fetchPlaces(here, { fetchImpl, gapMs: 0, staggerMs: 0 });
+    expect(fetchImpl).toHaveBeenCalledTimes(5);
+    expect(Object.keys(nearestByChain(places)).sort()).toEqual(['chipotle', 'mcdonalds', 'panera', 'tacobell']);
   });
 
   it('falls back to Nominatim, one chain a second, when Photon fails', async () => {
@@ -88,7 +103,7 @@ describe('OpenStreetMap search', () => {
       const q = new URL(url).searchParams.get('q');
       return { ok: true, json: async () => (q === 'Chipotle' ? result : []) };
     });
-    const places = await fetchPlaces(here, { fetchImpl, gapMs: 0 });
+    const places = await fetchPlaces(here, { fetchImpl, gapMs: 0, staggerMs: 0 });
     const nominatimCalls = fetchImpl.mock.calls.map(([u]) => u).filter((u) => u.startsWith('https://nominatim.openstreetmap.org/search?'));
     expect(nominatimCalls).toHaveLength(4);
     expect(new URL(nominatimCalls[0]).searchParams.get('bounded')).toBe('1');
@@ -98,7 +113,14 @@ describe('OpenStreetMap search', () => {
 
   it('throws when both searches fail', async () => {
     const fetchImpl = vi.fn().mockResolvedValue({ ok: false, status: 429 });
-    await expect(fetchPlaces(here, { fetchImpl, gapMs: 0 })).rejects.toThrow('HTTP 429');
+    await expect(fetchPlaces(here, { fetchImpl, gapMs: 0, staggerMs: 0 })).rejects.toThrow('HTTP 429');
+  });
+
+  it('leaves out a chain that fails everywhere', async () => {
+    const good = photonFetch();
+    const fetchImpl = vi.fn(async (url) => (url.includes('Panera') ? { ok: false, status: 503 } : good(url)));
+    const places = await fetchPlaces(here, { fetchImpl, gapMs: 0, staggerMs: 0 });
+    expect(Object.keys(nearestByChain(places)).sort()).toEqual(['chipotle', 'mcdonalds', 'tacobell']);
   });
 
   it('parses Nominatim results the same way', () => {
