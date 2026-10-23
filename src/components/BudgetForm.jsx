@@ -7,6 +7,9 @@ export default function BudgetForm({
   onSubmit,
   taxRate,
   onTaxRate,
+  taxLabel,
+  zip,
+  onZip,
   cap,
   onCap,
   onEditMenu,
@@ -131,6 +134,18 @@ export default function BudgetForm({
             <input type="number" inputMode="numeric" min="1" max="10" value={cap} onChange={(e) => onCap(Math.max(1, Number(e.target.value) || 1))} />
           </label>
           <label>
+            ZIP code
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="postal-code"
+              maxLength="5"
+              placeholder="e.g. 37203"
+              value={zip}
+              onChange={(e) => onZip(e.target.value.replace(/\D/g, '').slice(0, 5))}
+            />
+          </label>
+          <label>
             Sales tax (%)
             <input
               type="number"
@@ -143,6 +158,9 @@ export default function BudgetForm({
             />
           </label>
         </div>
+        <p className="fine">
+          Tax: {taxLabel}. Restaurant meals can be taxed at a different rate, so edit it if your receipt differs.
+        </p>
         <button type="button" className="link" onClick={onEditMenu}>
           Edit prices and favorites
         </button>

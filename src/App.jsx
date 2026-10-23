@@ -4,6 +4,7 @@ import defaults from './data/settings.json';
 import { applyFilters, LOW_SODIUM_MG } from './lib/filters.js';
 import { GOALS } from './lib/goals.js';
 import { planOrder } from './lib/optimizer.js';
+import { taxForZip } from './lib/tax.js';
 import { loadSaved, save } from './lib/storage.js';
 import BudgetForm from './components/BudgetForm.jsx';
 import MysteryBox from './components/MysteryBox.jsx';
@@ -14,6 +15,8 @@ export default function App() {
   const saved = useMemo(loadSaved, []);
   const [prices, setPrices] = useState(saved.prices ?? {});
   const [taxRate, setTaxRate] = useState(saved.taxRate ?? defaults.taxRate);
+  const [taxLabel, setTaxLabel] = useState(saved.taxLabel ?? `${defaults.taxLabel}, default`);
+  const [zip, setZip] = useState(saved.zip ?? '');
   const [cap, setCap] = useState(saved.cap ?? defaults.quantityCap);
   const [favorites, setFavorites] = useState(saved.favorites ?? []);
   const [filters, setFilters] = useState({ vegetarian: false, noPork: false, lowSodium: false, avoid: [], ...saved.filters });
@@ -33,9 +36,25 @@ export default function App() {
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(
-    () => save({ prices, taxRate, cap, favorites, filters, goal: form.goal }),
-    [prices, taxRate, cap, favorites, filters, form.goal],
+    () => save({ prices, taxRate, taxLabel, zip, cap, favorites, filters, goal: form.goal }),
+    [prices, taxRate, taxLabel, zip, cap, favorites, filters, form.goal],
   );
+
+  function changeZip(value) {
+    setZip(value);
+    const tax = taxForZip(value);
+    if (tax) {
+      setTaxRate(tax.rate);
+      setTaxLabel(`${(tax.rate * 100).toFixed(2)}%, ${tax.label} (estimate)`);
+    } else if (value.length === 5) {
+      setTaxLabel('ZIP not recognized, enter the rate by hand');
+    }
+  }
+
+  function changeTaxRate(rate) {
+    setTaxRate(rate);
+    setTaxLabel('set by you');
+  }
 
   // Prefill the selected goal's targets with their defaults the first time it is picked.
   useEffect(() => {
@@ -99,7 +118,10 @@ export default function App() {
             onChange={setForm}
             onSubmit={feedMe}
             taxRate={taxRate}
-            onTaxRate={setTaxRate}
+            onTaxRate={changeTaxRate}
+            taxLabel={taxLabel}
+            zip={zip}
+            onZip={changeZip}
             cap={cap}
             onCap={setCap}
             onEditMenu={() => setShowMenu(true)}

@@ -45,6 +45,7 @@ Diet and allergy filters (`src/lib/filters.js`) work with every goal: vegetarian
 | --- | --- |
 | `src/data/menu.json` | Items and deals with price, protein, calories, carbs, fat, sodium, allergens and meat |
 | `src/data/settings.json` | Default sales tax (9.25%, Nashville) and quantity cap |
+| `src/data/tax-rates.json` | Average combined sales tax per state (Tax Foundation, July 1, 2026), ZIP prefix → state ranges, and local overrides (Nashville 9.25%) |
 
 Prices are national average estimates (October 2026). Users can override them and star favorites on their device. Protein, calories and carbs come from the spec; fat, sodium and allergens come from fastfoodnutrition.org. All nutrition figures are approximate and must be checked against the official McDonald's Nutrition Calculator before launch. Meal Deal nutrition assumes water or a diet drink.
 
