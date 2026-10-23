@@ -5,6 +5,7 @@ import { applyFilters, LOW_SODIUM_MG } from './lib/filters.js';
 import { GOALS } from './lib/goals.js';
 import { planAcrossChains } from './lib/optimizer.js';
 import { taxForZip } from './lib/tax.js';
+import { DELIVERY_DEFAULTS, deliveryExtras, deliveryItems, fetchPlaces, inReach, locate, nearestByChain } from './lib/nearby.js';
 import { loadSaved, save } from './lib/storage.js';
 import BudgetForm from './components/BudgetForm.jsx';
 import MysteryBox from './components/MysteryBox.jsx';
@@ -20,6 +21,10 @@ export default function App() {
   const [cap, setCap] = useState(saved.cap ?? defaults.quantityCap);
   const [favorites, setFavorites] = useState(saved.favorites ?? []);
   const [chain, setChain] = useState(saved.chain in CHAIN_BY_ID ? saved.chain : 'all');
+  const [access, setAccess] = useState({ mode: 'any', minutes: 15, ...saved.access });
+  const [delivery, setDelivery] = useState({ ...DELIVERY_DEFAULTS, ...saved.delivery });
+  // Location is kept for this visit only, never saved.
+  const [near, setNear] = useState({ status: 'idle', nearest: {} });
   const [filters, setFilters] = useState({ vegetarian: false, noPork: false, lowSodium: false, avoid: [], ...saved.filters });
   const [form, setForm] = useState({
     budget: 10,
@@ -37,8 +42,8 @@ export default function App() {
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(
-    () => save({ prices, taxRate, taxLabel, zip, cap, favorites, filters, chain, goal: form.goal }),
-    [prices, taxRate, taxLabel, zip, cap, favorites, filters, chain, form.goal],
+    () => save({ prices, taxRate, taxLabel, zip, cap, favorites, filters, chain, access, delivery, goal: form.goal }),
+    [prices, taxRate, taxLabel, zip, cap, favorites, filters, chain, access, delivery, form.goal],
   );
 
   function changeZip(value) {
@@ -51,6 +56,38 @@ export default function App() {
       setTaxLabel('ZIP not recognized, enter the rate by hand');
     }
   }
+
+  async function findNearby() {
+    setNear((n) => ({ ...n, status: 'locating' }));
+    let here;
+    try {
+      here = await locate();
+    } catch (e) {
+      setNear((n) => ({ ...n, status: 'error', error: e.message }));
+      return;
+    }
+    setNear((n) => ({ ...n, status: 'searching' }));
+    try {
+      const places = await fetchPlaces(here);
+      setNear({ status: 'ready', nearest: nearestByChain(places) });
+      // Fill in the ZIP (and so the tax rate) from the nearest restaurant if it isn't set.
+      const zipFound = places.find((p) => p.zip)?.zip;
+      if (!zip && zipFound) changeZip(zipFound);
+    } catch {
+      setNear((n) => ({ ...n, status: 'error', error: 'search' }));
+    }
+  }
+
+  // Chain ids in reach, or null when every chain counts (Anywhere).
+  const reachable = useMemo(() => {
+    if (access.mode === 'any') return null;
+    if (near.status !== 'ready') return new Set();
+    return new Set(
+      Object.values(near.nearest)
+        .filter((p) => inReach(p, access.mode, access.minutes))
+        .map((p) => p.chain),
+    );
+  }, [access, near]);
 
   function changeTaxRate(rate) {
     setTaxRate(rate);
@@ -89,22 +126,37 @@ export default function App() {
     // A goal's own inputs always apply; the optional limits apply when set.
     const num = (key) => Number(form[key]) || undefined;
     const goalNum = (key) => (goalKeys.includes(key) ? num(key) : undefined);
-    setPlan(
-      planAcrossChains(menus.map((m) => ({ ...m, items: applyFilters(m.items, filters) })), {
-        goal: form.goal,
-        budget: Number(form.budget),
-        taxRate,
-        cap,
-        calorieLimit: num('calorieLimit'),
-        carbLimit: num('carbLimit'),
-        sodiumLimit: filters.lowSodium ? LOW_SODIUM_MG : undefined,
-        proteinMin: goalNum('proteinMin'),
-        calorieMin: goalNum('calorieMin'),
-        proteinPct: goalNum('proteinPct'),
-        carbPct: goalNum('carbPct'),
-        fatPct: goalNum('fatPct'),
-      }),
-    );
+    const delivered = access.mode === 'delivery';
+    const extras = delivered ? deliveryExtras(delivery) : 0;
+    const inPlay = menus
+      .filter((m) => !reachable || reachable.has(m.chain.id))
+      .map((m) => {
+        const items = applyFilters(m.items, filters);
+        return { ...m, items: delivered ? deliveryItems(items, delivery) : items };
+      });
+    const result = planAcrossChains(inPlay, {
+      goal: form.goal,
+      budget: Number(form.budget) - extras,
+      taxRate,
+      cap,
+      calorieLimit: num('calorieLimit'),
+      carbLimit: num('carbLimit'),
+      sodiumLimit: filters.lowSodium ? LOW_SODIUM_MG : undefined,
+      proteinMin: goalNum('proteinMin'),
+      calorieMin: goalNum('calorieMin'),
+      proteinPct: goalNum('proteinPct'),
+      carbPct: goalNum('carbPct'),
+      fatPct: goalNum('fatPct'),
+    });
+    // Where each order comes from, and what delivery adds on top.
+    const placeOf = (c) => (access.mode === 'any' ? null : near.nearest[c.id] ?? null);
+    setPlan({
+      ...result,
+      place: result.chain && placeOf(result.chain),
+      others: result.others.map((o) => ({ ...o, place: placeOf(o.chain) })),
+      mode: access.mode,
+      extras: delivered ? { fees: Number(delivery.fees) || 0, tip: Number(delivery.tip) || 0 } : null,
+    });
     setPhase('reveal');
   }
 
@@ -134,6 +186,13 @@ export default function App() {
             favoriteCount={favoriteCount}
             chain={chain}
             onChain={setChain}
+            access={access}
+            onAccess={setAccess}
+            delivery={delivery}
+            onDelivery={setDelivery}
+            near={near}
+            onLocate={findNearby}
+            reachable={reachable}
             filters={filters}
             onFilters={setFilters}
           />

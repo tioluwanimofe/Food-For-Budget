@@ -1,0 +1,14 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API (sample shaped like a real response, for tests)",
+  "elements": [
+    { "type": "node", "id": 1, "lat": 36.1530, "lon": -86.7980, "tags": { "amenity": "fast_food", "brand": "McDonald's", "brand:wikidata": "Q38076", "name": "McDonald's", "addr:housenumber": "1601", "addr:street": "Broadway", "addr:city": "Nashville", "addr:postcode": "37203" } },
+    { "type": "way", "id": 2, "center": { "lat": 36.1478, "lon": -86.8030 }, "tags": { "amenity": "fast_food", "brand": "Chipotle", "brand:wikidata": "Q465751", "name": "Chipotle Mexican Grill", "addr:postcode": "37203-1234" } },
+    { "type": "node", "id": 3, "lat": 36.1100, "lon": -86.8200, "tags": { "amenity": "fast_food", "name": "Taco Bell" } },
+    { "type": "node", "id": 4, "lat": 36.2400, "lon": -86.7000, "tags": { "amenity": "restaurant", "brand": "Panera Bread", "brand:wikidata": "Q7130852", "name": "Panera Bread" } },
+    { "type": "node", "id": 5, "lat": 36.1600, "lon": -86.7900, "tags": { "amenity": "fast_food", "name": "Hattie B's" } },
+    { "type": "node", "id": 6, "lat": 36.1590, "lon": -86.7950, "tags": { "disused:amenity": "fast_food", "name": "McDonald's" } },
+    { "type": "node", "id": 1, "lat": 36.1530, "lon": -86.7980, "tags": { "amenity": "fast_food", "brand:wikidata": "Q38076", "name": "McDonald's" } },
+    { "type": "node", "id": 7, "lat": 36.1700, "lon": -86.7800, "tags": { "amenity": "fast_food", "brand:wikidata": "Q38076", "name": "McDonald's" } }
+  ]
+}
