@@ -1,28 +1,42 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import menu from './data/menu.json';
 import defaults from './data/settings.json';
+import { GOALS } from './lib/goals.js';
 import { planOrder } from './lib/optimizer.js';
 import { loadSaved, save } from './lib/storage.js';
 import BudgetForm from './components/BudgetForm.jsx';
 import MysteryBox from './components/MysteryBox.jsx';
 import OrderCard from './components/OrderCard.jsx';
-import PriceEditor from './components/PriceEditor.jsx';
+import MenuEditor from './components/MenuEditor.jsx';
 
 export default function App() {
   const saved = useMemo(loadSaved, []);
   const [prices, setPrices] = useState(saved.prices ?? {});
   const [taxRate, setTaxRate] = useState(saved.taxRate ?? defaults.taxRate);
   const [cap, setCap] = useState(saved.cap ?? defaults.quantityCap);
-  const [form, setForm] = useState({ budget: 10, calorieLimit: '', carbLimit: '' });
+  const [favorites, setFavorites] = useState(saved.favorites ?? []);
+  const [form, setForm] = useState({ budget: 10, goal: saved.goal ?? 'protein', calorieLimit: '', carbLimit: '', proteinMin: '' });
   const [plan, setPlan] = useState(null);
   const [phase, setPhase] = useState('form'); // form | reveal | result
-  const [showPrices, setShowPrices] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
-  useEffect(() => save({ prices, taxRate, cap }), [prices, taxRate, cap]);
+  useEffect(() => save({ prices, taxRate, cap, favorites, goal: form.goal }), [prices, taxRate, cap, favorites, form.goal]);
+
+  // Prefill the selected goal's target with its default the first time it is picked.
+  useEffect(() => {
+    const target = GOALS[form.goal].target;
+    if (target) setForm((f) => (f[target.key] === '' ? { ...f, [target.key]: target.default } : f));
+  }, [form.goal]);
 
   const items = useMemo(
-    () => menu.items.map((i) => ({ ...i, price: prices[i.id] ?? i.price, edited: i.id in prices })),
-    [prices],
+    () =>
+      menu.items.map((i) => ({
+        ...i,
+        price: prices[i.id] ?? i.price,
+        edited: i.id in prices,
+        favorite: favorites.includes(i.id),
+      })),
+    [prices, favorites],
   );
 
   const revealDone = useCallback(() => setPhase('result'), []);
@@ -30,11 +44,13 @@ export default function App() {
   function feedMe() {
     setPlan(
       planOrder(items, {
+        goal: form.goal,
         budget: Number(form.budget),
         taxRate,
         cap,
         calorieLimit: Number(form.calorieLimit) || undefined,
         carbLimit: Number(form.carbLimit) || undefined,
+        proteinMin: GOALS[form.goal].target?.key === 'proteinMin' ? Number(form.proteinMin) || undefined : undefined,
       }),
     );
     setPhase('reveal');
@@ -59,15 +75,23 @@ export default function App() {
             onTaxRate={setTaxRate}
             cap={cap}
             onCap={setCap}
-            onEditPrices={() => setShowPrices(true)}
+            onEditMenu={() => setShowMenu(true)}
+            favoriteCount={favorites.length}
           />
         )}
         {phase === 'reveal' && <MysteryBox onDone={revealDone} />}
-        {phase === 'result' && <OrderCard plan={plan} taxRate={taxRate} onBack={() => setPhase('form')} />}
+        {phase === 'result' && <OrderCard plan={plan} goal={form.goal} taxRate={taxRate} onBack={() => setPhase('form')} />}
       </main>
 
-      {showPrices && (
-        <PriceEditor items={items} prices={prices} onChange={setPrices} onClose={() => setShowPrices(false)} />
+      {showMenu && (
+        <MenuEditor
+          items={items}
+          prices={prices}
+          onPrices={setPrices}
+          favorites={favorites}
+          onFavorites={setFavorites}
+          onClose={() => setShowMenu(false)}
+        />
       )}
 
       <footer>

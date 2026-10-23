@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import menu from '../data/menu.json';
-import { cashierLine, foodBudget, planOrder, solveMaxProtein } from './optimizer.js';
+import { cashierLine, foodBudget, planOrder, solve, solveMaxProtein } from './optimizer.js';
 
 const base = { budget: 10, taxRate: 0.0925, cap: 3 };
 
@@ -54,5 +54,55 @@ describe('cashierLine', () => {
     expect(cashierLine([{ item: mcdouble, qty: 2 }, { item: nuggets, qty: 1 }])).toBe(
       'Can I get 2 McDoubles and a 10-piece McNuggets, please?',
     );
+  });
+});
+
+describe('goal modes', () => {
+  const run = (goal, extra = {}) => solve(menu.items, { ...base, goal, ...extra });
+
+  it('calorie target keeps calories under the cap', () => {
+    const order = run('calories', { calorieLimit: 600 });
+    expect(order.calories).toBeLessThanOrEqual(600);
+  });
+
+  it('cheapest meal hits the protein target at the lowest cost', () => {
+    const order = run('cheapest', { proteinMin: 40 });
+    expect(order.protein).toBeGreaterThanOrEqual(40);
+    // Max protein for the same budget costs at least as much.
+    expect(order.subtotal).toBeLessThanOrEqual(run('protein').subtotal);
+    // Two McDoubles (44 g, $7.00) is a valid answer, so the cheapest is no more than that.
+    expect(order.subtotal).toBeLessThanOrEqual(7);
+  });
+
+  it('cheapest meal returns null when the target is out of reach', () => {
+    expect(run('cheapest', { proteinMin: 500 })).toBeNull();
+  });
+
+  it('low carb keeps carbs under the cap', () => {
+    const order = run('lowcarb', { budget: 15, carbLimit: 20 });
+    expect(order.carbs).toBeLessThanOrEqual(20);
+  });
+
+  it('most food maximizes calories', () => {
+    expect(run('mostfood').calories).toBeGreaterThanOrEqual(run('protein').calories);
+  });
+
+  it('just pick for me uses only favorites, at most 2 of each', () => {
+    const favs = new Set(['mcchicken', 'small-fries', 'hamburger']);
+    const items = menu.items.map((i) => ({ ...i, favorite: favs.has(i.id) }));
+    const order = solve(items, { ...base, goal: 'pickforme', cap: 3 });
+    for (const l of order.lines) {
+      expect(favs.has(l.item.id)).toBe(true);
+      expect(l.qty).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it('just pick for me returns null with no favorites', () => {
+    expect(run('pickforme')).toBeNull();
+  });
+
+  it('next best for cheapest meal costs at least as much', () => {
+    const { best, nextBest } = planOrder(menu.items, { ...base, goal: 'cheapest', proteinMin: 40 });
+    expect(nextBest.subtotal).toBeGreaterThanOrEqual(best.subtotal);
   });
 });

@@ -62,7 +62,16 @@ main { flex: 1; }
 .goal legend { font-weight: 700; margin-bottom: 8px; }
 .chip { padding: 8px 14px; border-radius: 999px; border: 2px solid var(--green); font-weight: 700; }
 .chip.selected { background: var(--green); color: #fff; }
-.chip input { position: absolute; opacity: 0; }
+.chip { cursor: pointer; position: relative; font-size: 0.95rem; padding: 7px 12px; }
+.chip input { position: absolute; opacity: 0; pointer-events: none; }
+.chip:has(input:focus-visible) { outline: 3px solid var(--gold-deep); outline-offset: 2px; }
+.goal .blurb { flex-basis: 100%; margin: 2px 0 0; }
+.target { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 700; }
+.unit-input { display: flex; align-items: center; gap: 6px; font-weight: 400; color: var(--muted); }
+.unit-input input { width: 90px; padding: 8px 10px; border: 2px solid var(--gold); border-radius: 10px; font-weight: 700; }
+.result .goal-tag { margin: -8px 0 8px; font-weight: 700; color: var(--green-deep); }
+.star { background: none; border: 0; font-size: 1.4rem; line-height: 1; color: var(--gold-deep); cursor: pointer; padding: 0 4px 0 0; }
+.prices li label { flex: 1; }
 
 .options summary { cursor: pointer; font-weight: 700; color: var(--green-deep); }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
@@ -135,8 +144,8 @@ main { flex: 1; }
 .totals div { background: var(--bg); border-radius: 12px; padding: 8px; text-align: center; }
 .totals dt { font-size: 0.75rem; color: var(--muted); }
 .totals dd { margin: 2px 0 0; font-weight: 900; font-size: 1.05rem; }
-.totals .protein { background: var(--green); color: #fff; }
-.totals .protein dt { color: #e3f6ea; }
+.totals .hi { background: var(--green); color: #fff; }
+.totals .hi dt { color: #e3f6ea; }
 .fine { font-size: 0.8rem; color: var(--muted); margin: 6px 0; }
 
 .say {

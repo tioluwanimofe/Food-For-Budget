@@ -1,3 +1,4 @@
+import { GOALS } from '../lib/goals.js';
 import { cashierLine } from '../lib/optimizer.js';
 
 const money = (n) => `$${n.toFixed(2)}`;
@@ -19,14 +20,22 @@ function Lines({ order }) {
   );
 }
 
-export default function OrderCard({ plan, taxRate, onBack }) {
+// The stat each goal is chasing gets the highlight on the card.
+const HIGHLIGHT = { protein: 'protein', calories: 'protein', lowcarb: 'protein', cheapest: 'total', mostfood: 'calories', pickforme: 'calories' };
+
+export default function OrderCard({ plan, goal, taxRate, onBack }) {
   const { best, nextBest } = plan ?? {};
+  const hi = (key) => (HIGHLIGHT[goal] === key ? 'hi' : undefined);
 
   if (!best) {
     return (
       <section className="card result">
         <h2>Nothing fits yet</h2>
-        <p>No combination fits that budget and those limits once tax is added. Try a bit more money or looser limits.</p>
+        <p>
+          {GOALS[goal].favoritesOnly
+            ? 'None of your favorites fit that budget yet. Star a few more, or try a bit more money.'
+            : 'No combination fits that budget and those limits once tax is added. Try a bit more money or looser limits.'}
+        </p>
         <button type="button" className="feed" onClick={onBack}>
           Try again
         </button>
@@ -39,18 +48,19 @@ export default function OrderCard({ plan, taxRate, onBack }) {
   return (
     <section className="card result">
       <h2>Your order</h2>
+      <p className="fine goal-tag">{GOALS[goal].label}</p>
       <Lines order={best} />
 
       <dl className="totals">
-        <div>
+        <div className={hi('total')}>
           <dt>Total with tax</dt>
           <dd>{money(best.total)}</dd>
         </div>
-        <div className="protein">
+        <div className={hi('protein')}>
           <dt>Protein</dt>
           <dd>{best.protein} g</dd>
         </div>
-        <div>
+        <div className={hi('calories')}>
           <dt>Calories</dt>
           <dd>{best.calories}</dd>
         </div>
