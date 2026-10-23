@@ -1,0 +1,34 @@
+{
+  "chain": "McDonald's",
+  "pricesAsOf": "2026-10",
+  "priceNote": "National average estimates. Prices vary by location; edit them to match your local menu.",
+  "items": [
+    { "id": "double-qpc", "name": "Double Quarter Pounder w/ Cheese", "say": ["Double Quarter Pounder with Cheese", "Double Quarter Pounders with Cheese"], "price": 8.29, "protein": 48, "calories": 740, "carbs": 43 },
+    { "id": "nuggets-20", "name": "20 pc McNuggets", "say": ["20-piece McNuggets", "20-piece McNuggets"], "price": 8.39, "protein": 44, "calories": 830, "carbs": 50 },
+    { "id": "qpc", "name": "Quarter Pounder w/ Cheese", "say": ["Quarter Pounder with Cheese", "Quarter Pounders with Cheese"], "price": 6.49, "protein": 30, "calories": 520, "carbs": 42 },
+    { "id": "big-mac", "name": "Big Mac", "say": ["Big Mac", "Big Macs"], "price": 5.91, "protein": 25, "calories": 590, "carbs": 45 },
+    { "id": "nuggets-10", "name": "10 pc McNuggets", "say": ["10-piece McNuggets", "10-piece McNuggets"], "price": 5.79, "protein": 23, "calories": 410, "carbs": 25 },
+    { "id": "mcdouble", "name": "McDouble", "say": ["McDouble", "McDoubles"], "price": 3.50, "protein": 22, "calories": 390, "carbs": 33 },
+    { "id": "cheeseburger", "name": "Cheeseburger", "say": ["Cheeseburger", "Cheeseburgers"], "price": 2.69, "protein": 15, "calories": 300, "carbs": 32 },
+    { "id": "mcchicken", "name": "McChicken", "say": ["McChicken", "McChickens"], "price": 2.86, "protein": 14, "calories": 400, "carbs": 39 },
+    { "id": "hamburger", "name": "Hamburger", "say": ["Hamburger", "Hamburgers"], "price": 2.19, "protein": 12, "calories": 250, "carbs": 31 },
+    { "id": "nuggets-4", "name": "4 pc McNuggets", "say": ["4-piece McNuggets", "4-piece McNuggets"], "price": 2.49, "protein": 9, "calories": 170, "carbs": 10 },
+    { "id": "small-fries", "name": "Small Fries", "say": ["Small Fries", "Small Fries"], "price": 2.79, "protein": 3, "calories": 230, "carbs": 29 },
+    {
+      "id": "meal-deal-mcdouble",
+      "name": "$5 Meal Deal (McDouble)",
+      "say": ["$5 Meal Deal with a McDouble", "$5 Meal Deals with a McDouble"],
+      "deal": true,
+      "contents": ["McDouble", "4 pc McNuggets", "Small Fries", "Small drink"],
+      "price": 5.00, "protein": 34, "calories": 790, "carbs": 72
+    },
+    {
+      "id": "meal-deal-mcchicken",
+      "name": "$5 Meal Deal (McChicken)",
+      "say": ["$5 Meal Deal with a McChicken", "$5 Meal Deals with a McChicken"],
+      "deal": true,
+      "contents": ["McChicken", "4 pc McNuggets", "Small Fries", "Small drink"],
+      "price": 5.00, "protein": 26, "calories": 800, "carbs": 78
+    }
+  ]
+}
