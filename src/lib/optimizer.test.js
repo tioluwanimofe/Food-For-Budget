@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import menu from '../data/menu.json';
-import { cashierLine, foodBudget, planOrder, solve, solveMaxProtein } from './optimizer.js';
+import { cashierLine, foodBudget, macroDeviation, macroSplit, planOrder, solve, solveMaxProtein } from './optimizer.js';
+import { applyFilters } from './filters.js';
 
 const base = { budget: 10, taxRate: 0.0925, cap: 3 };
 
@@ -104,5 +105,49 @@ describe('goal modes', () => {
   it('next best for cheapest meal costs at least as much', () => {
     const { best, nextBest } = planOrder(menu.items, { ...base, goal: 'cheapest', proteinMin: 40 });
     expect(nextBest.subtotal).toBeGreaterThanOrEqual(best.subtotal);
+  });
+});
+
+describe('balanced macros', () => {
+  const split = { proteinPct: 40, carbPct: 30, fatPct: 30, calorieMin: 500 };
+
+  it('meets the calorie floor and lands near the split', () => {
+    const order = solve(menu.items, { ...base, budget: 15, goal: 'balanced', ...split });
+    expect(order.calories).toBeGreaterThanOrEqual(500);
+    // No single-item order that fits is closer to the split than the solver's.
+    const singles = menu.items
+      .flatMap((i) => [1, 2, 3].map((qty) => ({ lines: [{ item: i, qty }] })))
+      .map((o) => ({ ...o, ...Object.fromEntries(['protein', 'carbs', 'fat', 'calories', 'price'].map((k) => [k, o.lines[0].item[k] * o.lines[0].qty])) }))
+      .filter((o) => o.calories >= 500 && o.price * 1.0925 <= 15);
+    for (const o of singles) expect(macroDeviation(order, split)).toBeLessThanOrEqual(macroDeviation(o, split) + 1e-6);
+  });
+
+  it('reports the split as percentages', () => {
+    expect(macroSplit({ protein: 25, carbs: 25, fat: 0 })).toEqual([50, 50, 0]);
+  });
+});
+
+describe('filters', () => {
+  it('removes items with an avoided allergen', () => {
+    const left = applyFilters(menu.items, { avoid: ['milk'] });
+    expect(left.length).toBeGreaterThan(0);
+    for (const i of left) expect(i.allergens).not.toContain('milk');
+  });
+
+  it('vegetarian leaves nothing on this menu (fries use beef flavor)', () => {
+    expect(applyFilters(menu.items, { vegetarian: true })).toEqual([]);
+  });
+
+  it('low sodium caps the whole order', () => {
+    const order = solve(menu.items, { ...base, sodiumLimit: 1000 });
+    expect(order.sodium).toBeLessThanOrEqual(1000);
+  });
+
+  it('every item has fat, sodium and allergen data', () => {
+    for (const i of menu.items) {
+      expect(typeof i.fat).toBe('number');
+      expect(typeof i.sodium).toBe('number');
+      expect(Array.isArray(i.allergens)).toBe(true);
+    }
   });
 });

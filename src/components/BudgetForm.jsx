@@ -1,3 +1,4 @@
+import { ALLERGENS } from '../lib/filters.js';
 import { GOALS, GOAL_IDS } from '../lib/goals.js';
 
 export default function BudgetForm({
@@ -13,12 +14,19 @@ export default function BudgetForm({
   onCap,
   onEditMenu,
   favoriteCount,
+  filters,
+  onFilters,
 }) {
   const set = (key) => (e) => onChange({ ...form, [key]: e.target.value });
   const goal = GOALS[form.goal];
-  const target = goal.target;
+  const targets = goal.targets ?? [];
+  const targetKeys = targets.map((t) => t.key);
   const budgetOk = Number(form.budget) > 0;
-  const targetOk = !target || Number(form[target.key]) > 0;
+  const targetOk = targets.every((t) => Number(form[t.key]) >= 0 && form[t.key] !== '');
+  const toggleFilter = (key) => onFilters({ ...filters, [key]: !filters[key] });
+  const toggleAvoid = (a) =>
+    onFilters({ ...filters, avoid: filters.avoid.includes(a) ? filters.avoid.filter((x) => x !== a) : [...filters.avoid, a] });
+  const activeFilters = ['vegetarian', 'noPork', 'lowSodium'].filter((k) => filters[k]).length + filters.avoid.length;
 
   return (
     <form
@@ -56,15 +64,46 @@ export default function BudgetForm({
         <p className="fine blurb">{goal.blurb}.</p>
       </fieldset>
 
-      {target && (
-        <label className="target">
-          {target.label}
-          <span className="unit-input">
-            <input type="number" inputMode="numeric" min="1" value={form[target.key]} onChange={set(target.key)} required />
-            <span>{target.unit}</span>
-          </span>
-        </label>
+      {targets.length > 0 && (
+        <div className={targets.length > 1 ? 'targets multi' : 'targets'}>
+          {targets.map((t) => (
+            <label key={t.key} className="target">
+              {t.label}
+              <span className="unit-input">
+                <input type="number" inputMode="numeric" min="0" value={form[t.key]} onChange={set(t.key)} required />
+                <span>{t.unit}</span>
+              </span>
+            </label>
+          ))}
+        </div>
       )}
+
+      <details className="options">
+        <summary>Diet and allergy filters{activeFilters > 0 && ` (${activeFilters} on)`}</summary>
+        <div className="filters">
+          <label className={`chip small${filters.vegetarian ? ' selected' : ''}`}>
+            <input type="checkbox" checked={filters.vegetarian} onChange={() => toggleFilter('vegetarian')} /> Vegetarian
+          </label>
+          <label className={`chip small${filters.noPork ? ' selected' : ''}`}>
+            <input type="checkbox" checked={filters.noPork} onChange={() => toggleFilter('noPork')} /> No pork
+          </label>
+          <label className={`chip small${filters.lowSodium ? ' selected' : ''}`}>
+            <input type="checkbox" checked={filters.lowSodium} onChange={() => toggleFilter('lowSodium')} /> Low sodium
+          </label>
+        </div>
+        <p className="fine">Avoid:</p>
+        <div className="filters">
+          {ALLERGENS.map((a) => (
+            <label key={a} className={`chip small${filters.avoid.includes(a) ? ' selected' : ''}`}>
+              <input type="checkbox" checked={filters.avoid.includes(a)} onChange={() => toggleAvoid(a)} /> No {a}
+            </label>
+          ))}
+        </div>
+        <p className="fine">
+          Low sodium keeps the whole order under 1,000 mg. Allergen info is approximate and kitchens share fryers and
+          grills, so check with the restaurant if an allergy is serious.
+        </p>
+      </details>
 
       {goal.favoritesOnly && (
         <p className="fine">
@@ -78,13 +117,13 @@ export default function BudgetForm({
       <details className="options">
         <summary>Limits and settings</summary>
         <div className="grid">
-          {target?.key !== 'calorieLimit' && (
+          {!targetKeys.includes('calorieLimit') && (
             <label>
               Calorie limit
               <input type="number" inputMode="numeric" min="0" placeholder="None" value={form.calorieLimit} onChange={set('calorieLimit')} />
             </label>
           )}
-          {target?.key !== 'carbLimit' && (
+          {!targetKeys.includes('carbLimit') && (
             <label>
               Carb limit (g)
               <input type="number" inputMode="numeric" min="0" placeholder="None" value={form.carbLimit} onChange={set('carbLimit')} />

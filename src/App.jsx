@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import menu from './data/menu.json';
 import defaults from './data/settings.json';
+import { applyFilters, LOW_SODIUM_MG } from './lib/filters.js';
 import { GOALS } from './lib/goals.js';
 import { planOrder } from './lib/optimizer.js';
 import { taxForZip } from './lib/tax.js';
@@ -18,14 +19,25 @@ export default function App() {
   const [zip, setZip] = useState(saved.zip ?? '');
   const [cap, setCap] = useState(saved.cap ?? defaults.quantityCap);
   const [favorites, setFavorites] = useState(saved.favorites ?? []);
-  const [form, setForm] = useState({ budget: 10, goal: saved.goal ?? 'protein', calorieLimit: '', carbLimit: '', proteinMin: '' });
+  const [filters, setFilters] = useState({ vegetarian: false, noPork: false, lowSodium: false, avoid: [], ...saved.filters });
+  const [form, setForm] = useState({
+    budget: 10,
+    goal: saved.goal ?? 'protein',
+    calorieLimit: '',
+    carbLimit: '',
+    proteinMin: '',
+    proteinPct: '',
+    carbPct: '',
+    fatPct: '',
+    calorieMin: '',
+  });
   const [plan, setPlan] = useState(null);
   const [phase, setPhase] = useState('form'); // form | reveal | result
   const [showMenu, setShowMenu] = useState(false);
 
   useEffect(
-    () => save({ prices, taxRate, taxLabel, zip, cap, favorites, goal: form.goal }),
-    [prices, taxRate, taxLabel, zip, cap, favorites, form.goal],
+    () => save({ prices, taxRate, taxLabel, zip, cap, favorites, filters, goal: form.goal }),
+    [prices, taxRate, taxLabel, zip, cap, favorites, filters, form.goal],
   );
 
   function changeZip(value) {
@@ -44,10 +56,13 @@ export default function App() {
     setTaxLabel('set by you');
   }
 
-  // Prefill the selected goal's target with its default the first time it is picked.
+  // Prefill the selected goal's targets with their defaults the first time it is picked.
   useEffect(() => {
-    const target = GOALS[form.goal].target;
-    if (target) setForm((f) => (f[target.key] === '' ? { ...f, [target.key]: target.default } : f));
+    const targets = GOALS[form.goal].targets ?? [];
+    setForm((f) => {
+      const empty = targets.filter((t) => f[t.key] === '');
+      return empty.length ? { ...f, ...Object.fromEntries(empty.map((t) => [t.key, t.default])) } : f;
+    });
   }, [form.goal]);
 
   const items = useMemo(
@@ -64,15 +79,24 @@ export default function App() {
   const revealDone = useCallback(() => setPhase('result'), []);
 
   function feedMe() {
+    const goalKeys = (GOALS[form.goal].targets ?? []).map((t) => t.key);
+    // A goal's own inputs always apply; the optional limits apply when set.
+    const num = (key) => Number(form[key]) || undefined;
+    const goalNum = (key) => (goalKeys.includes(key) ? num(key) : undefined);
     setPlan(
-      planOrder(items, {
+      planOrder(applyFilters(items, filters), {
         goal: form.goal,
         budget: Number(form.budget),
         taxRate,
         cap,
-        calorieLimit: Number(form.calorieLimit) || undefined,
-        carbLimit: Number(form.carbLimit) || undefined,
-        proteinMin: GOALS[form.goal].target?.key === 'proteinMin' ? Number(form.proteinMin) || undefined : undefined,
+        calorieLimit: num('calorieLimit'),
+        carbLimit: num('carbLimit'),
+        sodiumLimit: filters.lowSodium ? LOW_SODIUM_MG : undefined,
+        proteinMin: goalNum('proteinMin'),
+        calorieMin: goalNum('calorieMin'),
+        proteinPct: goalNum('proteinPct'),
+        carbPct: goalNum('carbPct'),
+        fatPct: goalNum('fatPct'),
       }),
     );
     setPhase('reveal');
@@ -102,10 +126,18 @@ export default function App() {
             onCap={setCap}
             onEditMenu={() => setShowMenu(true)}
             favoriteCount={favorites.length}
+            filters={filters}
+            onFilters={setFilters}
           />
         )}
         {phase === 'reveal' && <MysteryBox onDone={revealDone} />}
-        {phase === 'result' && <OrderCard plan={plan} goal={form.goal} taxRate={taxRate} onBack={() => setPhase('form')} />}
+        {phase === 'result' && <OrderCard
+            plan={plan}
+            goal={form.goal}
+            filtered={filters.vegetarian || filters.noPork || filters.lowSodium || filters.avoid.length > 0}
+            taxRate={taxRate}
+            onBack={() => setPhase('form')}
+          />}
       </main>
 
       {showMenu && (

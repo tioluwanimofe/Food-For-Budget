@@ -1,5 +1,5 @@
 // Each goal is the same integer program with a different objective and, for
-// some, one required rule. `target` is the number the user types for that goal.
+// some, required rules. `targets` are the numbers the user types for that goal.
 export const GOALS = {
   protein: {
     label: 'Max protein',
@@ -12,21 +12,33 @@ export const GOALS = {
     blurb: 'Most protein under a calorie cap',
     optimize: 'protein',
     opType: 'max',
-    target: { key: 'calorieLimit', label: 'Calories max', unit: 'cal', default: 600 },
+    targets: [{ key: 'calorieLimit', label: 'Calories max', unit: 'cal', default: 600 }],
   },
   cheapest: {
     label: 'Cheapest meal',
     blurb: 'Lowest cost that hits a protein target',
     optimize: 'cost',
     opType: 'min',
-    target: { key: 'proteinMin', label: 'Protein at least', unit: 'g', default: 40 },
+    targets: [{ key: 'proteinMin', label: 'Protein at least', unit: 'g', default: 40 }],
   },
   lowcarb: {
     label: 'Low carb',
     blurb: 'Most protein with a hard carb cap',
     optimize: 'protein',
     opType: 'max',
-    target: { key: 'carbLimit', label: 'Carbs max', unit: 'g', default: 20 },
+    targets: [{ key: 'carbLimit', label: 'Carbs max', unit: 'g', default: 20 }],
+  },
+  balanced: {
+    label: 'Balanced macros',
+    blurb: 'Closest to your protein / carb / fat split (share of calories)',
+    optimize: 'deviation',
+    opType: 'min',
+    targets: [
+      { key: 'proteinPct', label: 'Protein', unit: '%', default: 40 },
+      { key: 'carbPct', label: 'Carbs', unit: '%', default: 30 },
+      { key: 'fatPct', label: 'Fat', unit: '%', default: 30 },
+      { key: 'calorieMin', label: 'At least', unit: 'cal', default: 500 },
+    ],
   },
   mostfood: {
     label: 'Most food',
