@@ -196,3 +196,13 @@ footer p { margin: 4px 0; }
 .compare { list-style: none; margin: 8px 0 0; padding: 0; }
 .compare li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .compare .fine { margin: 0; }
+
+.nearby { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.nearby .filters { align-items: center; }
+.grid.three { grid-template-columns: 1fr 1fr 1fr; margin: 0; }
+.near-list { list-style: none; margin: 0; padding: 0; }
+.near-list li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.near-list li .fine { margin: 0; text-align: right; }
+.near-list li.out, .chip.out { opacity: 0.45; }
+.result .place { margin-top: -4px; }
+.result .place a { color: var(--green-deep); font-weight: 700; }

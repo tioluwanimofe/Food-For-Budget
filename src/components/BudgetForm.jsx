@@ -1,6 +1,7 @@
 import { CHAINS } from '../data/chains/index.js';
 import { ALLERGENS } from '../lib/filters.js';
 import { GOALS, GOAL_IDS } from '../lib/goals.js';
+import NearbyPicker from './NearbyPicker.jsx';
 
 export default function BudgetForm({
   form,
@@ -19,12 +20,21 @@ export default function BudgetForm({
   onFilters,
   chain,
   onChain,
+  access,
+  onAccess,
+  delivery,
+  onDelivery,
+  near,
+  onLocate,
+  reachable,
 }) {
   const set = (key) => (e) => onChange({ ...form, [key]: e.target.value });
   const goal = GOALS[form.goal];
   const targets = goal.targets ?? [];
   const targetKeys = targets.map((t) => t.key);
   const budgetOk = Number(form.budget) > 0;
+  // reachable is null when every chain counts (Anywhere), else the chain ids in reach.
+  const placeOk = !reachable || (chain === 'all' ? reachable.size > 0 : reachable.has(chain));
   const targetOk = targets.every((t) => Number(form[t.key]) >= 0 && form[t.key] !== '');
   const toggleFilter = (key) => onFilters({ ...filters, [key]: !filters[key] });
   const toggleAvoid = (a) =>
@@ -36,7 +46,7 @@ export default function BudgetForm({
       className="card form"
       onSubmit={(e) => {
         e.preventDefault();
-        if (budgetOk && targetOk) onSubmit();
+        if (budgetOk && targetOk && placeOk) onSubmit();
       }}
     >
       <label className="budget">
@@ -58,14 +68,29 @@ export default function BudgetForm({
 
       <fieldset className="goal">
         <legend>Where</legend>
-        {[{ id: 'all', name: 'All chains' }, ...CHAINS].map((c) => (
-          <label key={c.id} className={`chip${chain === c.id ? ' selected' : ''}`}>
-            <input type="radio" name="chain" value={c.id} checked={chain === c.id} onChange={() => onChain(c.id)} />
-            {c.name}
-          </label>
-        ))}
+        <NearbyPicker
+          access={access}
+          onAccess={onAccess}
+          delivery={delivery}
+          onDelivery={onDelivery}
+          near={near}
+          onLocate={onLocate}
+        />
+        {[{ id: 'all', name: 'All chains' }, ...CHAINS].map((c) => {
+          const out = reachable && c.id !== 'all' && !reachable.has(c.id);
+          return (
+            <label key={c.id} className={`chip${chain === c.id ? ' selected' : ''}${out ? ' out' : ''}`}>
+              <input type="radio" name="chain" value={c.id} checked={chain === c.id} onChange={() => onChain(c.id)} />
+              {c.name}
+            </label>
+          );
+        })}
         <p className="fine blurb">
-          {chain === 'all' ? 'Checks every chain and picks the one that does best. The order comes from one place.' : 'Only this menu.'}
+          {chain === 'all'
+            ? `Checks every chain${reachable ? ' in reach' : ''} and picks the one that does best. The order comes from one place.`
+            : 'Only this menu.'}
+          {reachable && !placeOk && near.status === 'ready' && ' Nothing here is in reach. Try a longer time or another way to get there.'}
+          {reachable && near.status !== 'ready' && ' Share your location first, or choose Anywhere.'}
         </p>
       </fieldset>
 
@@ -182,7 +207,7 @@ export default function BudgetForm({
         </button>
       </details>
 
-      <button type="submit" className="feed" disabled={!budgetOk || !targetOk}>
+      <button type="submit" className="feed" disabled={!budgetOk || !targetOk || !placeOk}>
         Feed me
       </button>
     </form>
