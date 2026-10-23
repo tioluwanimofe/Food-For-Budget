@@ -6,33 +6,23 @@ jobs:
   diag:
     runs-on: ubuntu-latest
     steps:
-      - name: Photon (komoot)
+      - uses: actions/checkout@v4
+        with: { ref: fix/nearby-photon }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Real search with the app's code
         run: |
-          for q in "McDonald's" "Taco Bell" "Chipotle" "Panera Bread"; do
-            echo "== photon $q"
-            curl -sS -m 30 -G -o out.json -w "status %{http_code} time %{time_total}\n" -H "Origin: https://food-for-budget.vercel.app" -D h.txt \
-              --data-urlencode "q=$q" --data-urlencode "lat=36.16" --data-urlencode "lon=-86.78" --data-urlencode "limit=15" \
-              --data-urlencode "bbox=-86.93,36.06,-86.63,36.26" https://photon.komoot.io/api/ || true
-            grep -i "access-control" h.txt || echo "no CORS header"
-            python3 -c "import json;d=json.load(open('out.json'));print(len(d.get('features',[])));[print(f['properties'].get('name'),f['properties'].get('osm_key'),f['properties'].get('osm_value'),f['properties'].get('street'),f['geometry']['coordinates']) for f in d.get('features',[])[:6]]" || head -c 300 out.json
-          done
-      - name: Nominatim
-        run: |
-          echo "== nominatim"
-          curl -sS -m 30 -G -o out.json -w "status %{http_code} time %{time_total}\n" -A "FoodForBudget/1.0 (https://food-for-budget.vercel.app)" -H "Origin: https://food-for-budget.vercel.app" -D h.txt \
-            --data-urlencode "q=Chipotle" --data-urlencode "format=jsonv2" --data-urlencode "limit=20" --data-urlencode "viewbox=-86.93,36.26,-86.63,36.06" --data-urlencode "bounded=1" --data-urlencode "extratags=1" https://nominatim.openstreetmap.org/search || true
-          grep -i "access-control" h.txt || echo "no CORS header"
-          python3 -c "import json;d=json.load(open('out.json'));print(len(d));[print(x['name'],x.get('type'),x['lat'],x['lon'],(x.get('extratags') or {}).get('brand:wikidata')) for x in d[:6]]" || head -c 300 out.json
-      - name: Overpass header variants
-        run: |
-          Q='[out:json][timeout:20];nwr["brand:wikidata"="Q465751"](around:5000,36.16,-86.78);out center tags;'
-          for ua in "FoodForBudget/1.0 (contact: atioluwanimofe@gmail.com)" "food-for-budget"; do
-            echo "== overpass-api.de UA=$ua"
-            curl -sS -m 30 -o out.txt -w "status %{http_code}\n" -A "$ua" -H "Accept: application/json" --data-urlencode "data=$Q" https://overpass-api.de/api/interpreter || true
-            head -c 200 out.txt; echo
-          done
-          for u in https://overpass.kumi.systems/api/interpreter https://overpass.osm.ch/api/interpreter; do
-            echo "== $u"
-            curl -sS -m 30 -o out.txt -w "status %{http_code} time %{time_total}\n" -A "FoodForBudget/1.0" --data-urlencode "data=$Q" "$u" || true
-            head -c 200 out.txt; echo
-          done
+          cat > t.mjs <<'JS'
+          import { fetchPlaces, nearestByChain } from './src/lib/nearby.js';
+          for (const [label, here] of [['Nashville', { lat: 36.1627, lon: -86.7816 }], ['Chicago Loop', { lat: 41.8781, lon: -87.6298 }]]) {
+            let t = Date.now();
+            const places = await fetchPlaces(here);
+            console.log(label, 'photon', Date.now() - t, 'ms', places.length, 'places');
+            for (const [c, p] of Object.entries(nearestByChain(places))) console.log(' ', c, p.miles.toFixed(2), 'mi', p.address, p.zip);
+          }
+          // Force the Nominatim backup.
+          const t = Date.now();
+          const viaNominatim = await fetchPlaces({ lat: 36.1627, lon: -86.7816 }, { fetchImpl: (u, o) => (u.includes('photon') ? Promise.resolve({ ok: false, status: 503 }) : fetch(u, { ...o, headers: { 'User-Agent': 'FoodForBudget/1.0 (https://food-for-budget.vercel.app)' } })) });
+          console.log('nominatim backup', Date.now() - t, 'ms', viaNominatim.length, 'places', Object.keys(nearestByChain(viaNominatim)));
+          JS
+          node t.mjs
