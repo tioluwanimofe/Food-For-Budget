@@ -8,15 +8,47 @@ export function foodBudget(budget, taxRate) {
   return budget / (1 + taxRate);
 }
 
+const MACROS = [
+  ['protein', 'proteinPct', 4],
+  ['carbs', 'carbPct', 4],
+  ['fat', 'fatPct', 9],
+];
+
+// Target share of macro calories for each macro, normalized to sum to 1.
+function macroShares(options) {
+  const raw = MACROS.map(([, key]) => Math.max(0, Number(options[key]) || 0));
+  const total = raw.reduce((a, b) => a + b, 0) || 1;
+  return raw.map((r) => r / total);
+}
+
+// How far an order's macro split is from the target, in macro calories.
+export function macroDeviation(order, options) {
+  const shares = macroShares(options);
+  const cals = MACROS.map(([m, , kcal]) => order[m] * kcal);
+  const total = cals.reduce((a, b) => a + b, 0);
+  return cals.reduce((d, c, i) => d + Math.abs(c - shares[i] * total), 0);
+}
+
+// The order's actual protein / carb / fat split, as whole percentages.
+export function macroSplit(order) {
+  const cals = MACROS.map(([m, , kcal]) => order[m] * kcal);
+  const total = cals.reduce((a, b) => a + b, 0) || 1;
+  return cals.map((c) => Math.round((c / total) * 100));
+}
+
 // Integer program: choose whole quantities of each item to optimize the
 // goal's objective, keeping the pre-tax cost within the food budget, under any
-// calorie / carb limits and over any protein minimum, with each item capped.
-export function solve(items, { goal = 'protein', budget, taxRate, calorieLimit, carbLimit, proteinMin, cap }) {
+// calorie / carb / sodium limits and over any protein / calorie minimum, with
+// each item capped.
+export function solve(items, options) {
+  const { goal = 'protein', budget, taxRate, calorieLimit, carbLimit, sodiumLimit, proteinMin, calorieMin, cap } = options;
   const g = GOALS[goal];
   const constraints = { cost: { max: foodBudget(budget, taxRate) + 1e-9 } };
   if (calorieLimit) constraints.calories = { max: calorieLimit };
   if (carbLimit) constraints.carbs = { max: carbLimit };
+  if (sodiumLimit) constraints.sodium = { max: sodiumLimit };
   if (proteinMin) constraints.protein = { min: proteinMin };
+  if (calorieMin) constraints.calories = { ...constraints.calories, min: calorieMin };
 
   const variables = {};
   const ints = {};
@@ -29,11 +61,14 @@ export function solve(items, { goal = 'protein', budget, taxRate, calorieLimit, 
       cost: item.price,
       calories: item.calories,
       carbs: item.carbs,
+      sodium: item.sodium ?? 0,
       [`cap_${item.id}`]: 1,
     };
     constraints[`cap_${item.id}`] = { max: itemCap };
     ints[item.id] = 1;
   }
+
+  if (g.optimize === 'deviation') addMacroRows(items, variables, constraints, macroShares(options));
 
   const result = solver.Solve({ optimize: g.optimize, opType: g.opType, constraints, variables, ints });
   if (!result.feasible) return null;
@@ -50,9 +85,30 @@ export function solve(items, { goal = 'protein', budget, taxRate, calorieLimit, 
     order.subtotal <= foodBudget(budget, taxRate) + 1e-9 &&
     (!calorieLimit || order.calories <= calorieLimit) &&
     (!carbLimit || order.carbs <= carbLimit) &&
+    (!sodiumLimit || order.sodium <= sodiumLimit) &&
     (!proteinMin || order.protein >= proteinMin) &&
+    (!calorieMin || order.calories >= calorieMin) &&
     lines.every((l) => l.item.id in variables && l.qty <= constraints[`cap_${l.item.id}`].max);
   return ok ? order : null;
+}
+
+// Balanced macros as a linear program: for each macro m, a deviation variable
+// d_m >= |macroCal_m - share_m * totalMacroCal|, written as two rows, and the
+// objective minimizes the sum of the d_m.
+function addMacroRows(items, variables, constraints, shares) {
+  MACROS.forEach(([m, , kcal], i) => {
+    for (const item of items) {
+      const v = variables[item.id];
+      if (!v) continue;
+      const total = MACROS.reduce((t, [mm, , k]) => t + (item[mm] ?? 0) * k, 0);
+      const coef = (item[m] ?? 0) * kcal - shares[i] * total;
+      v[`over_${m}`] = coef;
+      v[`under_${m}`] = coef;
+    }
+    variables[`dev_${m}`] = { deviation: 1, [`over_${m}`]: -1, [`under_${m}`]: 1 };
+    constraints[`over_${m}`] = { max: 0 };
+    constraints[`under_${m}`] = { min: 0 };
+  });
 }
 
 // Kept for callers that only want the default goal.
@@ -61,7 +117,7 @@ export function solveMaxProtein(items, options) {
 }
 
 export function summarize(lines, taxRate) {
-  const sum = (key) => lines.reduce((t, l) => t + l.item[key] * l.qty, 0);
+  const sum = (key) => lines.reduce((t, l) => t + (l.item[key] ?? 0) * l.qty, 0);
   const subtotal = round2(sum('price'));
   const tax = round2(subtotal * taxRate);
   return {
@@ -72,11 +128,17 @@ export function summarize(lines, taxRate) {
     protein: sum('protein'),
     calories: sum('calories'),
     carbs: sum('carbs'),
+    fat: sum('fat'),
+    sodium: sum('sodium'),
   };
 }
 
 // The order's score on the goal's objective (orders store price as subtotal).
-const score = (order, g) => (g.optimize === 'cost' ? order.subtotal : order[g.optimize]);
+function score(order, g, options) {
+  if (g.optimize === 'cost') return order.subtotal;
+  if (g.optimize === 'deviation') return macroDeviation(order, options);
+  return order[g.optimize];
+}
 
 // The best order plus a fallback: for each item in the best order, re-solve
 // as if that item were unavailable, and keep the best-scoring alternative.
@@ -85,7 +147,8 @@ export function planOrder(items, options) {
   const best = solve(items, options);
   if (!best) return { best: null, nextBest: null };
 
-  const better = (a, b) => (g.opType === 'max' ? score(a, g) > score(b, g) : score(a, g) < score(b, g));
+  const better = (a, b) =>
+    g.opType === 'max' ? score(a, g, options) > score(b, g, options) : score(a, g, options) < score(b, g, options);
   let nextBest = null;
   for (const { item } of best.lines) {
     const without = items.map((i) => (i.id === item.id ? { ...i, cap: 0 } : i));
