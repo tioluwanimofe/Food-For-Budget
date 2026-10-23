@@ -1,6 +1,8 @@
 // Which chains are within reach of the user: their location, nearby
 // restaurants from OpenStreetMap (Overpass API, free, no key), and a travel
-// time estimated from distance. Only the search leaves the device.
+// time estimated from distance. Overpass blocks requests straight from a
+// browser, so the search goes through this app's own /api/nearby function
+// (api/nearby.js), which sends a rounded location (about 1 km) only.
 
 // OpenStreetMap tags chain locations with the brand's Wikidata id; the name
 // pattern catches locations that only have a name.
@@ -24,8 +26,9 @@ export const MODE_IDS = Object.keys(MODES);
 export const TIME_LIMITS = [5, 10, 15, 20, 30];
 const DETOUR = 1.3;
 
-// Widest search: a 30 minute drive, or the delivery radius if that is larger.
-export const SEARCH_MILES = 10;
+// Widest search: a 30 minute drive (about 7 miles in a straight line), which
+// also covers the delivery radius.
+export const SEARCH_MILES = 7;
 
 const METERS_PER_MILE = 1609.344;
 
@@ -52,15 +55,12 @@ export function inReach(place, mode, minutes) {
 
 export function overpassQuery({ lat, lon }, miles = SEARCH_MILES) {
   const r = Math.round(miles * METERS_PER_MILE);
-  const ids = Object.values(BRANDS).map((b) => b.wikidata).join('|');
   const names = 'McDonald|Taco Bell|Chipotle|Panera';
   const area = `(around:${r},${lat},${lon})`;
-  return (
-    `[out:json][timeout:25];(` +
-    `nwr${area}["brand:wikidata"~"^(${ids})$"];` +
-    `nwr${area}["amenity"~"^(fast_food|restaurant|cafe)$"]["name"~"${names}",i];` +
-    `);out center tags;`
-  );
+  // Exact brand matches use the server's index; the name match is only for
+  // fast food places that lack a brand tag.
+  const brands = Object.values(BRANDS).map((b) => `nwr["brand:wikidata"="${b.wikidata}"]${area};`).join('');
+  return `[out:json][timeout:20];(${brands}nwr["amenity"="fast_food"]["name"~"${names}",i]${area};);out center tags;`;
 }
 
 function chainOf(tags) {
@@ -109,25 +109,20 @@ export function nearestByChain(places) {
   return out;
 }
 
-const ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+// Rounded to 2 decimals (about 1 km) so the location sent is coarse and
+// nearby users share cached results.
+export const roundCoord = (n) => Math.round(n * 100) / 100;
 
-export async function fetchPlaces(here, { fetchImpl = fetch, timeoutMs = 20000 } = {}) {
-  const body = new URLSearchParams({ data: overpassQuery(here) });
-  let lastError;
-  for (const url of ENDPOINTS) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-    try {
-      const res = await fetchImpl(url, { method: 'POST', body, signal: ctrl.signal });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return parsePlaces(await res.json(), here);
-    } catch (e) {
-      lastError = e;
-    } finally {
-      clearTimeout(timer);
-    }
+export async function fetchPlaces(here, { fetchImpl = fetch, timeoutMs = 30000 } = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(`/api/nearby?lat=${roundCoord(here.lat)}&lon=${roundCoord(here.lon)}`, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return parsePlaces(await res.json(), here);
+  } finally {
+    clearTimeout(timer);
   }
-  throw lastError;
 }
 
 export function locate({ geo = globalThis.navigator?.geolocation } = {}) {

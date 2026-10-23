@@ -1,5 +1,5 @@
 import { CHAINS } from '../data/chains/index.js';
-import { MODES, MODE_IDS, TIME_LIMITS, inReach, travelMinutes } from '../lib/nearby.js';
+import { MODES, MODE_IDS, SEARCH_MILES, TIME_LIMITS, inReach, travelMinutes } from '../lib/nearby.js';
 
 const ERRORS = {
   denied: 'Location is blocked. Allow it for this site in your browser settings, or choose Anywhere.',
@@ -68,7 +68,7 @@ export default function NearbyPicker({ access, onAccess, delivery, onDelivery, n
                 return (
                   <li key={c.id} className={ok ? undefined : 'out'}>
                     <strong>{c.name}</strong>
-                    <span className="fine">{p ? placeLabel(p, mode) : 'None within 10 mi'}</span>
+                    <span className="fine">{p ? placeLabel(p, mode) : `None within ${SEARCH_MILES} mi`}</span>
                   </li>
                 );
               })}
