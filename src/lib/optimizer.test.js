@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import menu from '../data/menu.json';
+import menu from '../data/chains/mcdonalds.json';
 import { cashierLine, foodBudget, macroDeviation, macroSplit, planOrder, solve, solveMaxProtein } from './optimizer.js';
 import { applyFilters } from './filters.js';
 

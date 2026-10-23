@@ -1,0 +1,365 @@
+{
+  "id": "chipotle",
+  "name": "Chipotle",
+  "pricesAsOf": "2025-07",
+  "priceNote": "National estimates (sixstoreys.com, mid-2025; price by protein is approximate, double chicken assumes about $4.15 extra). Prices vary by location; edit them to match your local menu.",
+  "nutritionNote": "Built from Chipotle's official US nutrition facts (Mar 2025) for a standard build: white rice, black beans, fresh tomato salsa, cheese and lettuce.",
+  "items": [
+    {
+      "id": "cp-chicken-bowl",
+      "name": "Chicken Burrito Bowl",
+      "say": [
+        "Chicken Burrito Bowl",
+        "Chicken Burrito Bowls"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 11.85,
+      "protein": 50,
+      "calories": 660,
+      "carbs": 68,
+      "fat": 20,
+      "sodium": 1610,
+      "allergens": [
+        "milk"
+      ],
+      "meat": "chicken"
+    },
+    {
+      "id": "cp-chicken-burrito",
+      "name": "Chicken Burrito",
+      "say": [
+        "Chicken Burrito",
+        "Chicken Burritos"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 11.85,
+      "protein": 58,
+      "calories": 980,
+      "carbs": 118,
+      "fat": 30,
+      "sodium": 2210,
+      "allergens": [
+        "milk",
+        "wheat"
+      ],
+      "meat": "chicken"
+    },
+    {
+      "id": "cp-steak-bowl",
+      "name": "Steak Burrito Bowl",
+      "say": [
+        "Steak Burrito Bowl",
+        "Steak Burrito Bowls"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 13.55,
+      "protein": 39,
+      "calories": 630,
+      "carbs": 69,
+      "fat": 20,
+      "sodium": 1630,
+      "allergens": [
+        "milk"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "cp-steak-burrito",
+      "name": "Steak Burrito",
+      "say": [
+        "Steak Burrito",
+        "Steak Burritos"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 13.55,
+      "protein": 47,
+      "calories": 950,
+      "carbs": 119,
+      "fat": 28,
+      "sodium": 2230,
+      "allergens": [
+        "milk",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "cp-barbacoa-bowl",
+      "name": "Barbacoa Burrito Bowl",
+      "say": [
+        "Barbacoa Burrito Bowl",
+        "Barbacoa Burrito Bowls"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 12.6,
+      "protein": 42,
+      "calories": 650,
+      "carbs": 70,
+      "fat": 20,
+      "sodium": 1830,
+      "allergens": [
+        "milk"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "cp-barbacoa-burrito",
+      "name": "Barbacoa Burrito",
+      "say": [
+        "Barbacoa Burrito",
+        "Barbacoa Burritos"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 12.6,
+      "protein": 50,
+      "calories": 970,
+      "carbs": 120,
+      "fat": 30,
+      "sodium": 2430,
+      "allergens": [
+        "milk",
+        "wheat"
+      ],
+      "meat": "beef"
+    },
+    {
+      "id": "cp-carnitas-bowl",
+      "name": "Carnitas Burrito Bowl",
+      "say": [
+        "Carnitas Burrito Bowl",
+        "Carnitas Burrito Bowls"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 12.6,
+      "protein": 41,
+      "calories": 690,
+      "carbs": 68,
+      "fat": 26,
+      "sodium": 1750,
+      "allergens": [
+        "milk"
+      ],
+      "meat": "pork"
+    },
+    {
+      "id": "cp-carnitas-burrito",
+      "name": "Carnitas Burrito",
+      "say": [
+        "Carnitas Burrito",
+        "Carnitas Burritos"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 12.6,
+      "protein": 49,
+      "calories": 1010,
+      "carbs": 118,
+      "fat": 34,
+      "sodium": 2350,
+      "allergens": [
+        "milk",
+        "wheat"
+      ],
+      "meat": "pork"
+    },
+    {
+      "id": "cp-sofritas-bowl",
+      "name": "Sofritas Burrito Bowl",
+      "say": [
+        "Sofritas Burrito Bowl",
+        "Sofritas Burrito Bowls"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 11.85,
+      "protein": 26,
+      "calories": 630,
+      "carbs": 77,
+      "fat": 24,
+      "sodium": 1860,
+      "allergens": [
+        "milk",
+        "soy"
+      ],
+      "meat": null
+    },
+    {
+      "id": "cp-sofritas-burrito",
+      "name": "Sofritas Burrito",
+      "say": [
+        "Sofritas Burrito",
+        "Sofritas Burritos"
+      ],
+      "contents": [
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 11.85,
+      "protein": 34,
+      "calories": 950,
+      "carbs": 127,
+      "fat": 32,
+      "sodium": 2460,
+      "allergens": [
+        "milk",
+        "soy",
+        "wheat"
+      ],
+      "meat": null
+    },
+    {
+      "id": "cp-chicken-bowl-double",
+      "name": "Chicken Burrito Bowl, double chicken",
+      "say": [
+        "Chicken Burrito Bowl with double chicken",
+        "Chicken Burrito Bowls with double chicken"
+      ],
+      "contents": [
+        "2\u00d7 chicken",
+        "white rice",
+        "black beans",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 16.0,
+      "protein": 82,
+      "calories": 840,
+      "carbs": 68,
+      "fat": 28,
+      "sodium": 1920,
+      "allergens": [
+        "milk"
+      ],
+      "meat": "chicken",
+      "priceIsEstimate": true
+    },
+    {
+      "id": "cp-chicken-tacos",
+      "name": "3 Crispy Chicken Tacos",
+      "say": [
+        "order of 3 Crispy Chicken Tacos",
+        "orders of 3 Crispy Chicken Tacos"
+      ],
+      "contents": [
+        "chicken",
+        "fresh tomato salsa",
+        "cheese",
+        "lettuce"
+      ],
+      "price": 11.85,
+      "protein": 41,
+      "calories": 530,
+      "carbs": 36,
+      "fat": 24,
+      "sodium": 1050,
+      "allergens": [
+        "milk"
+      ],
+      "meat": "chicken"
+    },
+    {
+      "id": "cp-chips",
+      "name": "Chips",
+      "say": [
+        "Chips",
+        "orders of Chips"
+      ],
+      "price": 2.25,
+      "protein": 7,
+      "calories": 540,
+      "carbs": 73,
+      "fat": 25,
+      "sodium": 390,
+      "allergens": [],
+      "meat": null
+    },
+    {
+      "id": "cp-side-guac",
+      "name": "Side of Guacamole",
+      "say": [
+        "Side of Guacamole",
+        "orders of Side of Guacamole"
+      ],
+      "price": 2.95,
+      "protein": 2,
+      "calories": 230,
+      "carbs": 8,
+      "fat": 22,
+      "sodium": 370,
+      "allergens": [],
+      "meat": null
+    },
+    {
+      "id": "cp-chips-guac",
+      "name": "Chips & Guacamole",
+      "say": [
+        "Chips & Guacamole",
+        "orders of Chips & Guacamole"
+      ],
+      "price": 5.2,
+      "protein": 9,
+      "calories": 770,
+      "carbs": 81,
+      "fat": 47,
+      "sodium": 760,
+      "allergens": [],
+      "meat": null
+    }
+  ]
+}

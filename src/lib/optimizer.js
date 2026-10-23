@@ -135,6 +135,9 @@ export function summarize(lines, taxRate) {
     carbs: sum('carbs'),
     fat: sum('fat'),
     sodium: sum('sodium'),
+    // Some chains are missing sodium for some items, or only have estimated carbs.
+    sodiumKnown: lines.every((l) => l.item.sodium != null),
+    carbsEstimated: lines.some((l) => l.item.carbsEstimated),
   };
 }
 
@@ -147,22 +150,41 @@ function score(order, g, options) {
 
 // The best order plus a fallback: for each item in the best order, re-solve
 // as if that item were unavailable, and keep the best-scoring alternative.
-export function planOrder(items, options) {
+// Whether order a beats order b on the goal's objective.
+export function better(a, b, options) {
   const g = GOALS[options.goal ?? 'protein'];
+  const sa = score(a, g, options);
+  const sb = score(b, g, options);
+  return g.opType === 'max' ? sa > sb : sa < sb;
+}
+
+export function planOrder(items, options) {
   const best = solve(items, options);
   if (!best) return { best: null, nextBest: null };
 
-  const better = (a, b) =>
-    g.opType === 'max' ? score(a, g, options) > score(b, g, options) : score(a, g, options) < score(b, g, options);
   let nextBest = null;
   for (const { item } of best.lines) {
     const without = items.map((i) => (i.id === item.id ? { ...i, cap: 0 } : i));
     const alt = solve(without, options);
-    if (alt && (!nextBest || better(alt, nextBest))) {
+    if (alt && (!nextBest || better(alt, nextBest, options))) {
       nextBest = { ...alt, missing: item.name };
     }
   }
   return { best, nextBest };
+}
+
+// One order always comes from one restaurant. For "all chains", plan each
+// chain's menu separately and keep the best; `others` holds every other chain's
+// best order, best first, so the card can compare. menus: [{ chain, items }].
+export function planAcrossChains(menus, options) {
+  const plans = menus
+    .map(({ chain, items }) => ({ chain, ...planOrder(items, options) }))
+    .filter((p) => p.best);
+  if (plans.length === 0) return { best: null, nextBest: null, chain: null, others: [] };
+  // Stable sort keeps the listed chain order on a tie.
+  plans.sort((a, b) => (better(a.best, b.best, options) ? -1 : better(b.best, a.best, options) ? 1 : 0));
+  const [top, ...rest] = plans;
+  return { ...top, others: rest.map((p) => ({ chain: p.chain, best: p.best })) };
 }
 
 // "Can I get 2 McDoubles and a 10-piece McNuggets, please?"

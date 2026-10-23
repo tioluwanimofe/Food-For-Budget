@@ -1,5 +1,6 @@
 {
-  "chain": "McDonald's",
+  "id": "mcdonalds",
+  "name": "McDonald's",
   "pricesAsOf": "2026-10",
   "priceNote": "National average estimates. Prices vary by location; edit them to match your local menu.",
   "items": [

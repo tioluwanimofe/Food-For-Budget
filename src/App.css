@@ -191,3 +191,8 @@ footer p { margin: 4px 0; }
 .targets.multi .unit-input input { width: 76px; padding: 8px 6px; }
 .filters { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .chip.small { font-size: 0.85rem; padding: 5px 10px; }
+
+.chain-name { margin: 16px 0 0; font-size: 1rem; color: var(--green-deep); }
+.compare { list-style: none; margin: 8px 0 0; padding: 0; }
+.compare li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.compare .fine { margin: 0; }
