@@ -42,6 +42,7 @@ Goals are defined in `src/lib/goals.js`. The "next best option" re-solves with e
 | --- | --- |
 | `src/data/menu.json` | Items and deals with price, protein, calories and carbs |
 | `src/data/settings.json` | Default sales tax (9.25%, Nashville) and quantity cap |
+| `src/data/tax-rates.json` | Average combined sales tax per state (Tax Foundation, July 1, 2026), ZIP prefix → state ranges, and local overrides (Nashville 9.25%) |
 
 Prices are national average estimates (October 2026). Users can override them and star favorites on their device. Nutrition figures are approximate and must be checked against the official McDonald's Nutrition Calculator before launch. Meal Deal nutrition assumes water or a diet drink.
 
